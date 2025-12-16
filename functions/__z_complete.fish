@@ -1,6 +1,11 @@
 function __z_complete -d "add completions"
-    complete -c $Z_CMD -a "(__z -l | string replace -r '^\\S*\\s*' '')" -f -k
-    complete -c $ZO_CMD -a "(__z -l | string replace -r '^\\S*\\s*' '')" -f -k
+    complete -e $Z_CMD
+    function __z_complete_options
+        set -l zdata ($Z_CMD -l | cut -d' ' -f2- | awk -F / '{print $NF}' | string lower)
+        set -l dirs (complete -C"'' $comp" | string match -r '.*/$' | string lower | string trim -c /)
+        printf "%s\n" $dirs\t./
+        printf "%s\n" $zdata\t
+    end
 
     complete -c $Z_CMD -s c -l clean -d "Cleans out $Z_DATA"
     complete -c $Z_CMD -s e -l echo -d "Prints best match, no cd"
@@ -10,4 +15,6 @@ function __z_complete -d "add completions"
     complete -c $Z_CMD -s t -l recent -d "Searches by recency, cd"
     complete -c $Z_CMD -s h -l help -d "Print help"
     complete -c $Z_CMD -s x -l delete -d "Removes the current directory from $Z_DATA"
+    complete -c $Z_CMD -d dir -f -a "(__z_complete_options)"
+    complete -c $ZO_CMD -d dir -f -a "(__z_complete_options)"
 end
