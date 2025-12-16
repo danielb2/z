@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/jethrokuan/z.svg?branch=master)](https://travis-ci.org/jethrokuan/z)
-
 # Z
 
 **z** is a port of [z](https://github.com/rupa/z) for the [fish shell](https://fishshell.com).
@@ -12,22 +10,19 @@ Originally written by [@jethrokuan](https://github.com/jethrokuan/), co-maintain
 
 ## Installation
 
-Install with [Fisher](https://github.com/jorgebucaran/fisher):
+Install with [reef](https://github.com/danielb2/reef): or [Fisher](https://github.com/jorgebucaran/fisher):
 
 ```console
-fisher install jethrokuan/z
-```
-
-For fish <`2.7.0` users you can install from our legacy branch:
-
-```
-fisher install z@pre27
+reef install danielb2/z
 ```
 
 ## Usage
 
-See [man/man1/z.md](https://github.com/jethrokuan/z/blob/master/man/man1/z.md) for details.
+See [man/man1/z.md](https://github.com/danielb2/z/blob/master/man/man1/z.md) for details.
 
 ## License
 
 Z is MIT licensed. See the [LICENSE](LICENSE) for details.
+
+## ChangeLog
+- 2025.12.16: implement `..`, `-` and empty command symantics to mimick those of `cd`

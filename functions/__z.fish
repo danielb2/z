@@ -25,6 +25,20 @@ function __z -d "Jump to a recent directory."
     set -l options h/help c/clean e/echo l/list p/purge r/rank t/recent d/directory x/delete
 
     argparse $options -- $argv
+    if test -z "$argv"
+        pushd $HOME
+        return 0
+    end
+
+    if test "$argv" = -
+        popd
+        return 0
+    end
+
+    if test "$argv" = ".."
+        pushd ..
+        return 0
+    end
 
     if set -q _flag_help
         __print_help
