@@ -30,3 +30,4 @@ Z is MIT licensed. See the [LICENSE](LICENSE) for details.
 
 ## ChangeLog
 - 2025.12.16: implement `..`, `-` and empty command symantics to mimick those of `cd`
+- 2025.12.16: cd into local dir if it exists as opposed to jumping

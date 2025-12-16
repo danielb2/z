@@ -29,8 +29,15 @@ function __z -d "Jump to a recent directory."
         return 0
     end
 
+    if test -d "$argv"
+        pushd $argv
+        return 0
+    end
+
     if test "$argv" = -
+        set -l cwd (pwd)
         popd
+        set -a dirstack $cwd
         return 0
     end
 
