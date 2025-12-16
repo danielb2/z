@@ -8,6 +8,10 @@ A _pure-fish_ port means **z** is _fast_ and _fish-friendly_, with tab-completio
 
 Originally written by [@jethrokuan](https://github.com/jethrokuan/), co-maintained with [@krobelus](https://github.com/krobelus).
 
+## Notes
+
+The project by [@jethrokuan](https://github.com/jethrokuan/) appears dead, so I'm not even bothering doing a PR
+
 ## Installation
 
 Install with [reef](https://github.com/danielb2/reef): or [Fisher](https://github.com/jorgebucaran/fisher):
