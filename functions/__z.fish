@@ -22,26 +22,33 @@ function __z -d "Jump to a recent directory."
         end
     end
 
+    function __z_pushd
+        set -l cur (pwd)
+        builtin cd $argv[1]
+        set -gxa dirstack (pwd)
+        set -gx __z_dirprev $cur
+    end
+
     set -l options h/help c/clean e/echo l/list p/purge r/rank t/recent d/directory x/delete
 
     if test -z "$argv"
-        pushd $HOME
-        return 0
+        __z_pushd $argv
+        return $status
     end
 
     if test -d "$argv"
-        pushd $argv
-        return 0
+        __z_pushd $argv
+        return $status
     end
 
     if test "$argv" = -
-        cd -
-        return 0
+        __z_pushd $__z_dirprev
+        return $status
     end
 
     if test "$argv" = ".."
-        pushd ..
-        return 0
+        __z_pushd ..
+        return $status
     end
 
     argparse $options -- $argv
@@ -189,6 +196,6 @@ function __z -d "Jump to a recent directory."
             echo "Not sure how to open file manager"; and return 1
         end
     else
-        pushd "$target"
+        __z_pushd "$target"
     end
 end
