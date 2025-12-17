@@ -29,5 +29,6 @@ See [man/man1/z.md](https://github.com/danielb2/z/blob/master/man/man1/z.md) for
 Z is MIT licensed. See the [LICENSE](LICENSE) for details.
 
 ## ChangeLog
+- 2025.12.17: implementation now allows $Z_CMD to be set to `cd`
 - 2025.12.16: implement `..`, `-` and empty command symantics to mimick those of `cd`
 - 2025.12.16: cd into local dir if it exists as opposed to jumping
