@@ -24,9 +24,9 @@ function __z -d "Jump to a recent directory."
 
     function __z_pushd
         set -l cur (pwd)
-        builtin cd $argv[1]
-        set -gxa dirstack (pwd)
-        set -gx __z_dirprev $cur
+        builtin cd $argv[1]; or return
+        set -a dirstack (pwd)
+        set -x __z_dirprev $cur
     end
 
     set -l options h/help c/clean e/echo l/list p/purge r/rank t/recent d/directory x/delete

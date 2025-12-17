@@ -1,8 +1,12 @@
 function __z_complete -d "add completions"
     complete -e $Z_CMD
     function __z_complete_options
-        set -l zdata ($Z_CMD -l | cut -d' ' -f2- | awk -F / '{print $NF}' | string lower)
-        set -l dirs (complete -C"'' $comp" | string match -r '.*/$' | string lower | string trim -c /)
+        set -l zdata ($Z_CMD -l | cut -d' ' -f2- | awk -F / '{print $NF}' )
+        if not set -q comp[1]
+            set comp (commandline -ct | string replace -r -- '^-[^=]*=' '' $comp)
+        end
+        set -l dirs (complete -C"'' $comp" | string match -r '.*/$')
+
         printf "%s\n" $dirs\t./
         printf "%s\n" $zdata\t
     end
