@@ -6,12 +6,43 @@ if test -z "$Z_DATA"
     end
     set -U Z_DATA "$Z_DATA_DIR/data"
 end
+if not set -q Z_DATA_DIR
+    set -U Z_DATA_DIR (path dirname -- "$Z_DATA")
+end
 
 if test ! -e "$Z_DATA"
     if test ! -e "$Z_DATA_DIR"
-        mkdir -p -m 700 "$Z_DATA_DIR"
+        mkdir -p -m 700 "$Z_DATA_DIR"; or begin
+            printf "Unable to create z data directory: %s\n" "$Z_DATA_DIR" >&2
+            return 1
+        end
     end
-    touch "$Z_DATA"
+    touch "$Z_DATA"; or begin
+        printf "Unable to create z data file: %s\n" "$Z_DATA" >&2
+        return 1
+    end
+    chmod 600 "$Z_DATA"; or begin
+        printf "Unable to protect z data file: %s\n" "$Z_DATA" >&2
+        return 1
+    end
+end
+
+function __z_encode_path
+    set -l value "$argv[1]"
+    set value (string replace --all -- '%' '%25' "$value")
+    set value (string replace --all -- '\\' '%5C' "$value")
+    set value (string replace --all -- '|' '%7C' "$value")
+    set value (string replace --all -- (printf '\n') '%0A' "$value")
+    printf '%s\n' "$value"
+end
+
+function __z_decode_path
+    set -l value "$argv[1]"
+    set value (string replace --all -- '%0A' (printf '\n') "$value" | string collect --no-trim)
+    set value (string replace --all -- '%7C' '|' "$value" | string collect --no-trim)
+    set value (string replace --all -- '%5C' '\\' "$value" | string collect --no-trim)
+    string replace --all -- %25 % "$value" | string collect --no-trim
+
 end
 
 if test -z "$Z_CMD"
@@ -39,8 +70,6 @@ else if contains $HOME $Z_EXCLUDE
     set Z_EXCLUDE (string replace -r -- "^$HOME\$" '^'$HOME'$$' $Z_EXCLUDE)
 end
 
-# Setup completions once first
-__z_complete
 
 function __z_on_variable_pwd --on-variable PWD
     __z_add

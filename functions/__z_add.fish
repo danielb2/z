@@ -10,8 +10,8 @@ function __z_add -d "Add PATH to .z file"
     set -l tmpfile (mktemp $Z_DATA.XXXXXX)
 
     if test -f $tmpfile
-        set -l path (string replace --all \\ \\\\ $PWD)
-        command awk -v path=$path -v now=(date +%s) -F "|" '
+        set -l path (__z_encode_path "$PWD")
+        command awk -v path="$path" -v now=(date +%s) -F "|" '
       BEGIN {
           rank[path] = 1
           time[path] = now
@@ -35,15 +35,28 @@ function __z_add -d "Add PATH to .z file"
       }
     ' $Z_DATA 2>/dev/null >$tmpfile
 
-        if test ! -z "$Z_OWNER"
-            chown $Z_OWNER:(id -ng $Z_OWNER) $tmpfile
+        if test $status -ne 0
+            rm -f "$tmpfile"
+            printf "Unable to update %s\n" "$Z_DATA" >&2
+            return 1
         end
-        #
-        # Don't use redirection here as it can lead to a race condition where $Z_DATA is clobbered.
-        # Note: There is a still a possible race condition where an old version of $Z_DATA is
-        #       read by one instance of Fish before another instance of Fish writes its copy.
-        #
-        command mv $tmpfile $Z_DATA
-        or command rm $tmpfile
+
+        chmod 600 "$tmpfile"; or begin
+            rm -f "$tmpfile"
+            printf "Unable to protect %s\n" "$Z_DATA" >&2
+            return 1
+        end
+        if test ! -z "$Z_OWNER"
+            chown $Z_OWNER:(id -ng $Z_OWNER) "$tmpfile"; or begin
+                rm -f "$tmpfile"
+                printf "Unable to set owner on %s\n" "$Z_DATA" >&2
+                return 1
+            end
+        end
+        command mv "$tmpfile" "$Z_DATA"; or begin
+            rm -f "$tmpfile"
+            printf "Unable to replace %s\n" "$Z_DATA" >&2
+            return 1
+        end
     end
 end

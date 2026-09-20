@@ -6,8 +6,8 @@ z - jump around: port of rupa's z
 
 ## SYNOPSIS
 
-`z [-cehlprt] string1 string2...` <br>
-`zo [-cehlprt] string1 string2...`
+`z [-cdehlprtx] string1 string2...` <br>
+`zo [-cdehlprtx] string1 string2...`
 
 ## DESCRIPTION
 
@@ -29,6 +29,9 @@ For more details about frecency, see https://github.com/rupa/z.
   * `-e`, `--echo`:
     Prints the best match. No cd.
 
+  * `-d`, `--directory`:
+    Opens the best match with the configured file manager. No cd.
+
   * `-h`, `--help`:
     Show a brief help message.
 
@@ -37,6 +40,9 @@ For more details about frecency, see https://github.com/rupa/z.
 
   * `-r`, `--rank`:
     Match by rank only.
+
+  * `-p`, `--purge`:
+    Deletes all entries from `$Z_DATA`.
 
   * `-t`, `--recent`:
     Match by recent only.
@@ -80,3 +86,8 @@ For more details about frecency, see https://github.com/rupa/z.
     For example `set -p Z_EXCLUDE "^/mnt/workVPN"` will block all paths starting
     with `/mnt/workVPN`. `set -P Z_EXCLUDE "^/mnt/workVPN\$"` would exclude
     exactly that directory, but not any of `/mnt/workVPN`'s subdirectories.
+
+The data file stores an escaped path field so special characters remain
+lossless. Existing records remain readable and migrate during updates or
+cleanup. The file uses private permissions, and rewrites preserve the
+configured owner.

@@ -1,6 +1,6 @@
 function __z -d "Jump to a recent directory."
     function __print_help -d "Print z help."
-        printf "Usage: $Z_CMD  [-celrth] string1 string2...\n\n"
+        printf "Usage: $Z_CMD  [-cdehlprtx] string1 string2...\n\n"
         printf "         -c --clean    Removes directories that no longer exist from $Z_DATA\n"
         printf "         -d --dir      Opens matching directory using system file manager.\n"
         printf "         -e --echo     Prints best match, no cd\n"
@@ -31,41 +31,72 @@ function __z -d "Jump to a recent directory."
 
     set -l options h/help c/clean e/echo l/list p/purge r/rank t/recent d/directory x/delete
 
-    if test -z "$argv"
-        __z_pushd $argv
+    if test (count $argv) -eq 0
+        __z_pushd
         return $status
     end
 
-    if test -d "$argv"
-        __z_pushd $argv
+    if test (count $argv) -eq 1; and test -d "$argv[1]"
+        __z_pushd "$argv[1]"
         return $status
     end
 
-    if test "$argv" = -
+    if test (count $argv) -eq 1; and test "$argv[1]" = -
         __z_pushd $__z_dirprev
         return $status
     end
 
-    if test "$argv" = ".."
+    if test (count $argv) -eq 1; and test "$argv[1]" = ".."
         __z_pushd ..
         return $status
     end
 
     argparse $options -- $argv
+    or begin
+        __print_help >&2
+        return 2
+    end
 
     if set -q _flag_help
         __print_help
         return 0
     else if set -q _flag_clean
-        __z_clean
+        __z_clean; or return $status
         printf "%s cleaned!\n" $Z_DATA
         return 0
     else if set -q _flag_purge
-        echo >$Z_DATA
+        command chmod 600 "$Z_DATA"; or return 1
+        printf '' > "$Z_DATA"; or begin
+            printf "Unable to purge %s\n" "$Z_DATA" >&2
+            return 1
+        end
+        if test ! -z "$Z_OWNER"
+            command chown $Z_OWNER:(id -ng $Z_OWNER) "$Z_DATA"; or return 1
+        end
         printf "%s purged!\n" $Z_DATA
         return 0
     else if set -q _flag_delete
-        sed -i -e "\:^$PWD|.*:d" $Z_DATA
+        set -l tmpfile (mktemp $Z_DATA.XXXXXX); or return 1
+        set -l encoded_pwd (__z_encode_path "$PWD")
+        awk -F "|" -v pwd="$PWD" -v encoded_pwd="$encoded_pwd" '$1 != pwd && $1 != encoded_pwd { print }' "$Z_DATA" > "$tmpfile"
+        or begin
+            rm -f "$tmpfile"
+            return 1
+        end
+        chmod 600 "$tmpfile"; or begin
+            rm -f "$tmpfile"
+            return 1
+        end
+        if test ! -z "$Z_OWNER"
+            command chown $Z_OWNER:(id -ng $Z_OWNER) "$tmpfile"; or begin
+                rm -f "$tmpfile"
+                return 1
+            end
+        end
+        mv -f "$tmpfile" "$Z_DATA"; or begin
+            rm -f "$tmpfile"
+            return 1
+        end
         return 0
     end
 
@@ -84,6 +115,14 @@ function __z -d "Jump to a recent directory."
             if( dx < 86400 ) return rank*2
             if( dx < 604800 ) return rank/2
             return rank/4
+        }
+
+        function decode(path) {
+            gsub("%0A", "\n", path)
+            gsub("%7C", "|", path)
+            gsub("%5C", "\\\\", path)
+            gsub("%25", "%", path)
+            return path
         }
 
         function output(matches, best_match, common) {
@@ -124,15 +163,16 @@ function __z -d "Jump to a recent directory."
             } else if( typ == "recent" ) {
                 rank = $3 - t
             } else rank = frecent($2, $3)
-            if( $1 ~ q ) {
-                matches[$1] = rank
-            } else if( tolower($1) ~ tolower(q) ) imatches[$1] = rank
-            if( matches[$1] && matches[$1] > hi_rank ) {
-                best_match = $1
-                hi_rank = matches[$1]
-            } else if( imatches[$1] && imatches[$1] > ihi_rank ) {
-                ibest_match = $1
-                ihi_rank = imatches[$1]
+            path = decode($1)
+            if( path ~ q ) {
+                matches[path] = rank
+            } else if( tolower(path) ~ tolower(q) ) imatches[path] = rank
+            if( matches[path] && matches[path] > hi_rank ) {
+                best_match = path
+                hi_rank = matches[path]
+            } else if( imatches[path] && imatches[path] > ihi_rank ) {
+                ibest_match = path
+                ihi_rank = imatches[path]
             }
         }
 

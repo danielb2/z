@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Install Fish
         run: |
           sudo apt-add-repository -yn ppa:fish-shell/release-3
@@ -20,6 +20,7 @@ jobs:
 
       - name: Run Tests
         run: |
-          $GITHUB_WORKSPACE/ && fisher install .
+          cd "$GITHUB_WORKSPACE"
+          fisher install .
           fishtape test/*.fish
         shell: fish {0}

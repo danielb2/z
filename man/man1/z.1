@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "Z" "1" "August 2019" "" ""
+.TH "Z" "1" "September 2026" "" ""
 .
 .SH "NAME"
 \fBz\fR \- jump around
@@ -10,10 +10,10 @@
 z \- jump around: port of rupa\'s z
 .
 .SH "SYNOPSIS"
-\fBz [\-cehlprt] string1 string2\.\.\.\fR
+\fBz [\-cdehlprtx] string1 string2\.\.\.\fR
 .
 .br
-\fBzo [\-cehlprt] string1 string2\.\.\.\fR
+\fBzo [\-cdehlprtx] string1 string2\.\.\.\fR
 .
 .SH "DESCRIPTION"
 Port of rupa\'s z:
@@ -36,6 +36,10 @@ Removes directories that no longer exist from \fB$Z_DATA\fR\.
 .TP
 \fB\-e\fR, \fB\-\-echo\fR
 Prints the best match\. No cd\.
+.TP
+\fB\-d\fR, \fB\-\-directory\fR
+Opens the best match with the configured file manager\. No cd\.
+.
 .
 .TP
 \fB\-h\fR, \fB\-\-help\fR
@@ -52,6 +56,10 @@ Match by rank only\.
 .TP
 \fB\-t\fR, \fB\-\-recent\fR
 Match by recent only\.
+.TP
+\fB\-p\fR, \fB\-\-purge\fR
+Deletes all entries from \fB$Z_DATA\fR\.
+.
 .
 .TP
 \fB\-x\fR, \fB\-\-delete\fR
@@ -92,4 +100,7 @@ Runs \fBopencmd dir\fR on \fBzo dir\fR (defaults to \fBopen\fR or \fBxdg\-open\f
 .TP
 \fBset \-U Z_OWNER "username"\fR
 Ensure data file is owned by \fBusername\fR\. This prevents usage of \fBz\fR with \fBsudo\fR to cause file to be inaccessible in non\-sudo sessions\.
+.P
+The data file stores an escaped path field so special characters remain lossless\. Existing records remain readable and migrate during updates or cleanup\. The file uses private permissions, and rewrites preserve the configured owner\.
+.
 
