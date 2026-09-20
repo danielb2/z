@@ -6,9 +6,7 @@ if test -z "$Z_DATA"
     end
     set -U Z_DATA "$Z_DATA_DIR/data"
 end
-if not set -q Z_DATA_DIR
-    set -U Z_DATA_DIR (path dirname -- "$Z_DATA")
-end
+set -U Z_DATA_DIR (path dirname -- "$Z_DATA")
 
 if test ! -e "$Z_DATA"
     if test ! -e "$Z_DATA_DIR"
@@ -21,10 +19,10 @@ if test ! -e "$Z_DATA"
         printf "Unable to create z data file: %s\n" "$Z_DATA" >&2
         return 1
     end
-    chmod 600 "$Z_DATA"; or begin
-        printf "Unable to protect z data file: %s\n" "$Z_DATA" >&2
-        return 1
-    end
+end
+chmod 600 "$Z_DATA"; or begin
+    printf "Unable to protect z data file: %s\n" "$Z_DATA" >&2
+    return 1
 end
 
 function __z_encode_path
@@ -33,16 +31,20 @@ function __z_encode_path
     set value (string replace --all -- '\\' '%5C' "$value")
     set value (string replace --all -- '|' '%7C' "$value")
     set value (string replace --all -- (printf '\n') '%0A' "$value")
-    printf '%s\n' "$value"
+    printf 'v1:%s\n' "$value"
 end
 
 function __z_decode_path
     set -l value "$argv[1]"
+    if not string match -q 'v1:*' -- "$value"
+        printf '%s\n' "$value"
+        return
+    end
+    set value (string sub -s 4 -- "$value")
     set value (string replace --all -- '%0A' (printf '\n') "$value" | string collect --no-trim)
     set value (string replace --all -- '%7C' '|' "$value" | string collect --no-trim)
     set value (string replace --all -- '%5C' '\\' "$value" | string collect --no-trim)
     string replace --all -- %25 % "$value" | string collect --no-trim
-
 end
 
 if test -z "$Z_CMD"

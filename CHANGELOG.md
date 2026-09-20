@@ -10,6 +10,11 @@
 - Failed data-file creation, cleanup, purge, or replacement now reports an error instead of appearing successful.
 - Completion and manual-page entries now include directory opening and purge behavior.
 - The README now documents both installation methods, common commands, and the current manual.
+- Repeated visits now merge old and new storage records instead of creating duplicate entries.
+- Frecency scores now change continuously between the existing time bands, so results do not jump at exact time boundaries.
+- Equal scores use stable path ordering.
+- Fixed storage migration failures for paths containing backslashes.
+- Fixed search parsing for multiple matching directories and paths containing backslashes.
 
 For maintainers:
 

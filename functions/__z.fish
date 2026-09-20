@@ -76,9 +76,28 @@ function __z -d "Jump to a recent directory."
         printf "%s purged!\n" $Z_DATA
         return 0
     else if set -q _flag_delete
-        set -l tmpfile (mktemp $Z_DATA.XXXXXX); or return 1
+        set -l tmpfile (mktemp "$Z_DATA.XXXXXX"); or return 1
         set -l encoded_pwd (__z_encode_path "$PWD")
-        awk -F "|" -v pwd="$PWD" -v encoded_pwd="$encoded_pwd" '$1 != pwd && $1 != encoded_pwd { print }' "$Z_DATA" > "$tmpfile"
+        awk -F "|" -v encoded_pwd="$encoded_pwd" '
+            function encode(value, out, i, c, slash) {
+                out = ""
+                slash = sprintf("%c", 92)
+                for( i = 1; i <= length(value); i++ ) {
+                    c = substr(value, i, 1)
+                    if( c == "%" ) out = out "%25"
+                    else if( c == slash ) out = out "%5C"
+                    else if( c == "|" ) out = out "%7C"
+                    else if( c == "\n" ) out = out "%0A"
+                    else out = out c
+                }
+                return "v1:" out
+            }
+            function canonical(value) {
+                if( substr(value, 1, 3) == "v1:" ) return value
+                return encode(value)
+            }
+            canonical($1) != encoded_pwd { print }
+        ' "$Z_DATA" >"$tmpfile"
         or begin
             rm -f "$tmpfile"
             return 1
@@ -111,27 +130,56 @@ function __z -d "Jump to a recent directory."
     set -l z_script '
         function frecent(rank, time) {
             dx = t-time
-            if( dx < 3600 ) return rank*4
-            if( dx < 86400 ) return rank*2
-            if( dx < 604800 ) return rank/2
-            return rank/4
+            if( dx < 0 ) dx = 0
+            # Preserve the original time-band weights while interpolating.
+            if( dx < 3600 ) return rank * 4 * exp(log(0.5) * dx / 3600)
+            if( dx < 86400 ) return rank * 2 * exp(log(0.25) * (dx-3600) / (86400-3600))
+            if( dx < 604800 ) return rank * 0.5 * exp(log(0.5) * (dx-86400) / (604800-86400))
+            return rank * 0.25 * exp(-(dx-604800) / 604800)
+        }
+
+        function encode(path, out, i, c, slash) {
+            out = ""
+            slash = sprintf("%c", 92)
+            for( i = 1; i <= length(path); i++ ) {
+                c = substr(path, i, 1)
+                if( c == "%" ) out = out "%25"
+                else if( c == slash ) out = out "%5C"
+                else if( c == "|" ) out = out "%7C"
+                else if( c == "\n" ) out = out "%0A"
+                else out = out c
+            }
+            return "v1:" out
+        }
+
+        function canonical(path) {
+            if( substr(path, 1, 3) == "v1:" ) return path
+            return encode(path)
         }
 
         function decode(path) {
+            if( substr(path, 1, 3) != "v1:" ) return path
+            path = substr(path, 4)
             gsub("%0A", "\n", path)
             gsub("%7C", "|", path)
-            gsub("%5C", "\\\\", path)
+            gsub("%5C", sprintf("%c", 92), path)
             gsub("%25", "%", path)
             return path
+        }
+
+        function better(score, path, current_score, current_path) {
+            if( score > current_score ) return 1
+            if( score < current_score ) return 0
+            return current_path == "" || path < current_path
         }
 
         function output(matches, best_match, common) {
             # list or return the desired directory
             if( list ) {
-                cmd = "sort -nr"
+                cmd = "sort -t '\t' -k1,1nr -k2,2"
                 for( x in matches ) {
                     if( matches[x] ) {
-                        printf "%-10s %s\n", matches[x], x | cmd
+                        printf "%s\t%s\n", matches[x], x | cmd
                     }
                 }
             } else {
@@ -140,8 +188,10 @@ function __z -d "Jump to a recent directory."
             }
         }
 
-        function common(matches) {
+        function common(matches, short, x, slash) {
             # find the common root of a list of matches, if it exists
+            short = ""
+            slash = sprintf("%c", 92)
             for( x in matches ) {
                 if( matches[x] && (!short || length(x) < length(short)) ) {
                     short = x
@@ -149,6 +199,11 @@ function __z -d "Jump to a recent directory."
             }
             if( short == "/" ) return
             for( x in matches ) if( matches[x] && index(x, short) != 1 ) {
+                    return
+                }
+            for( x in matches ) if( matches[x] && x != short &&
+                    substr(x, length(short) + 1, 1) != "/" &&
+                    substr(x, length(short) + 1, 1) != slash ) {
                     return
                 }
             return short
@@ -165,12 +220,14 @@ function __z -d "Jump to a recent directory."
             } else rank = frecent($2, $3)
             path = decode($1)
             if( path ~ q ) {
-                matches[path] = rank
-            } else if( tolower(path) ~ tolower(q) ) imatches[path] = rank
-            if( matches[path] && matches[path] > hi_rank ) {
+                if( !(path in matches) || rank > matches[path] ) matches[path] = rank
+            } else if( tolower(path) ~ tolower(q) ) {
+                if( !(path in imatches) || rank > imatches[path] ) imatches[path] = rank
+            }
+            if( path in matches && better(matches[path], path, hi_rank, best_match) ) {
                 best_match = path
                 hi_rank = matches[path]
-            } else if( imatches[path] && imatches[path] > ihi_rank ) {
+            } else if( path in imatches && better(imatches[path], path, ihi_rank, ibest_match) ) {
                 ibest_match = path
                 ihi_rank = imatches[path]
             }
@@ -225,9 +282,10 @@ function __z -d "Jump to a recent directory."
             type -q "$ZO_METHOD"; and "$ZO_METHOD" "$target"; and return $status
             echo "Cannot open with ZO_METHOD set to $ZO_METHOD"; and return 1
         else if test "$OS" = Windows_NT
-            # Be careful, in msys2, explorer always return 1
-            type -q explorer; and explorer "$target"
-            return 0
+            if type -q explorer
+                explorer "$target"
+                return $status
+            end
             echo "Cannot open file explorer"
             return 1
         else

@@ -1,20 +1,28 @@
 set -xg pth (mktemp -d)
-set -xg Z_DATA "$pth/.z"
+mkdir -p "$pth/data dir"
+set -xg Z_DATA "$pth/data dir/.z"
 set -xg special '(){}#$%^<>?*"\'\\ &	'
 set -xg pipe_path "$pth/pipe|path"
 set -xg newline_path "$pth/new\nline"
 set -xg unicode_path "$pth/日本語"
-mkdir -p "$pth/foo" "$pth/bar" "$pth/$special" "$pipe_path" "$newline_path" "$unicode_path"
-touch $Z_DATA
+set -xg percent_path "$pth/literal%7Cpath"
+set -xg common_a "$pth/common-a"
+set -xg common_b "$pth/common-b"
+mkdir -p "$pth/foo" "$pth/bar" "$pth/$special" "$pipe_path" "$newline_path" "$unicode_path" "$percent_path" "$common_a" "$common_b"
+touch "$Z_DATA"
 
 function cd_some
     z --clean
-    for path in "$pth/foo" "$pth/bar" "$pth/$special" "$pipe_path" "$newline_path" "$unicode_path"
+    for path in "$pth/foo" "$pth/bar" "$pth/$special" "$pipe_path" "$newline_path" "$unicode_path" "$percent_path" "$common_a" "$common_b"
         cd "$path"
     end
 end
 
 cd_some
+printf "%s|4|1501234567\n" "$percent_path" >> "$Z_DATA"
+__z_add
+
+@test "legacy rows merge into one encoded row" 1 -eq (grep -c 'v1:.*literal%257Cpath|' "$Z_DATA")
 
 @test ".z is created" -f $Z_DATA
 @test "Z_CMD is set" ! -z $Z_CMD
@@ -23,6 +31,9 @@ cd_some
 @test "has special" 0 -eq (grep -qF $special $Z_DATA; echo $status)
 @test "encoded pipe path" 0 -eq (grep -q '%7C' $Z_DATA; echo $status)
 @test "encoded newline path" 0 -eq (grep -q '%0A' $Z_DATA; echo $status)
+@test "encoded literal percent path" 0 -eq (grep -q 'literal%257Cpath' $Z_DATA; echo $status)
+@test "literal percent path is searchable" "$percent_path" = (z -e 'literal%7Cpath')
+@test "multiple matches parse safely" 0 -eq (z -e common >/dev/null; echo $status)
 @test "! has kid" 1 -eq (grep -q kid $Z_DATA; echo $status)
 @test "z --purge" -z (z --purge > /dev/null; cat $Z_DATA)
 @test "z --clean" 1 -eq (
