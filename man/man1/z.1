@@ -46,6 +46,10 @@ Opens the best match with the configured file manager\. No cd\.
 Show a brief help message\.
 .
 .TP
+\fB\-v\fR, \fB\-\-version\fR
+Print the installed version string without changing directory\.
+.
+.TP
 \fB\-l\fR, \fB\-\-list\fR
 Show a list of matches, and their scores\. No cd\.
 .
@@ -57,8 +61,8 @@ Match by rank only\.
 \fB\-t\fR, \fB\-\-recent\fR
 Match by recent only\.
 .TP
-\fB\-y\fR, \fB\-\-typo\fR
-Enables typo\-tolerant fallback matching for this search\. Exact and case\-insensitive matches take priority\.
+\fB\-f\fR, \fB\-\-fuzzy\fR
+Enables fuzzy fallback matching for this search\. Exact and case\-insensitive matches take priority\.
 .
 .TP
 \fB\-p\fR, \fB\-\-purge\fR
@@ -98,9 +102,8 @@ Change commands to \fBj\fR and \fBjo\fR
 Set data file to \fB$HOME/\.foo\fR
 .
 .TP
-\fBset \-U Z_TYPO true\fR
-Enables typo\-tolerant fallback matching for searches\.
-.
+\fBset \-U Z_FUZZY true\fR
+Enables fuzzy fallback matching for searches\.
 .TP
 \fBset \-U ZO_METHOD "opencmd"\fR
 Runs \fBopencmd dir\fR on \fBzo dir\fR (defaults to \fBopen\fR or \fBxdg\-open\fR)

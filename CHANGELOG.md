@@ -5,7 +5,8 @@
 - [fix] Cleanup removes missing directories without removing live entries.
 - [fix] Cleanup preserves the database format while rewriting valid rows.
 - [maintenance] Cleanup tests use synthetic stale records and do not delete directories.
-- [feature] Added opt-in typo-tolerant matching with `--typo` and `Z_TYPO=true`.
+- [feature] Added opt-in fuzzy matching with `--fuzzy` and `Z_FUZZY=true`.
+- [feature] Added `-v/--version`, reporting the fork version `3.0.0`.
 
 ## 2026-09-20
 

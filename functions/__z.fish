@@ -1,6 +1,6 @@
 function __z -d "Jump to a recent directory."
     function __print_help -d "Print z help."
-        printf "Usage: $Z_CMD  [-cdehlprtyx] string1 string2...\n\n"
+        printf "Usage: $Z_CMD  [-cdefhlprtvx] string1 string2...\n\n"
         printf "         -c --clean    Removes directories that no longer exist from $Z_DATA\n"
         printf "         -d --dir      Opens matching directory using system file manager.\n"
         printf "         -e --echo     Prints best match, no cd\n"
@@ -8,9 +8,10 @@ function __z -d "Jump to a recent directory."
         printf "         -p --purge    Delete all entries from $Z_DATA\n"
         printf "         -r --rank     Search by rank\n"
         printf "         -t --recent   Search by recency\n"
-        printf "         -y --typo     Enable typo-tolerant fallback matching\n"
+        printf "         -f --fuzzy    Enable fuzzy fallback matching\n"
         printf "         -x --delete   Removes the current directory from $Z_DATA\n"
         printf "         -h --help     Print this help\n\n"
+        printf "         -v --version  Print the z version\n"
     end
     function __z_legacy_escape_regex
         # taken from escape_string_pcre2 in fish
@@ -30,7 +31,7 @@ function __z -d "Jump to a recent directory."
         set -gx __z_dirprev $cur
     end
 
-    set -l options h/help c/clean e/echo l/list p/purge r/rank t/recent y/typo d/directory x/delete
+    set -l options h/help v/version c/clean e/echo l/list p/purge r/rank t/recent f/fuzzy d/directory x/delete
 
     if test (count $argv) -eq 0
         __z_pushd
@@ -58,13 +59,16 @@ function __z -d "Jump to a recent directory."
         return 2
     end
 
-    set -l typo_enabled 0
-    if set -q _flag_typo; or string match -q -i -- true 1 yes "$Z_TYPO"
-        set typo_enabled 1
+    set -l fuzzy_enabled 0
+    if set -q _flag_fuzzy; or string match -q -i -- true 1 yes "$Z_FUZZY"
+        set fuzzy_enabled 1
     end
 
     if set -q _flag_help
         __print_help
+        return 0
+    else if set -q _flag_version
+        printf "z %s\n" "$Z_VERSION"
         return 0
     else if set -q _flag_clean
         __z_clean; or return $status
@@ -326,11 +330,11 @@ function __z -d "Jump to a recent directory."
     if set -q _flag_list
         # Handle list separately as it can print common path information to stderr
         # which cannot be captured from a subcommand.
-        command awk -v t=(date +%s) -v list="list" -v typ="$typ" -v q="$q" -v fuzzy_enabled="$typo_enabled" -v fuzzy_query="$fuzzy_query" -F "|" $z_script "$Z_DATA"
+        command awk -v t=(date +%s) -v list="list" -v typ="$typ" -v q="$q" -v fuzzy_enabled="$fuzzy_enabled" -v fuzzy_query="$fuzzy_query" -F "|" $z_script "$Z_DATA"
         return
     end
 
-    set target (command awk -v t=(date +%s) -v typ="$typ" -v q="$q" -v fuzzy_enabled="$typo_enabled" -v fuzzy_query="$fuzzy_query" -F "|" $z_script "$Z_DATA")
+    set target (command awk -v t=(date +%s) -v typ="$typ" -v q="$q" -v fuzzy_enabled="$fuzzy_enabled" -v fuzzy_query="$fuzzy_query" -F "|" $z_script "$Z_DATA")
 
     if test "$status" -gt 0
         return

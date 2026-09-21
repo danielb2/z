@@ -35,6 +35,9 @@ For more details about frecency, see https://github.com/rupa/z.
   * `-h`, `--help`:
     Show a brief help message.
 
+  * `-v`, `--version`:
+    Print the installed version string without changing directory.
+
   * `-l`, `--list`:
     Show a list of matches, and their scores. No cd.
 
@@ -47,8 +50,8 @@ For more details about frecency, see https://github.com/rupa/z.
   * `-t`, `--recent`:
     Match by recent only.
 
-  * `-y`, `--typo`:
-    Enables typo-tolerant fallback matching for this search. Exact and case-insensitive matches take priority.
+  * `-f`, `--fuzzy`:
+    Enables fuzzy fallback matching for this search. Exact and case-insensitive matches take priority.
 
   * `-x`, `--delete`:
     Removes the current directory from `$Z_DATA`.
@@ -90,8 +93,10 @@ For more details about frecency, see https://github.com/rupa/z.
     with `/mnt/workVPN`. `set -P Z_EXCLUDE "^/mnt/workVPN\$"` would exclude
     exactly that directory, but not any of `/mnt/workVPN`'s subdirectories.
 
-  * `set -U Z_TYPO true`:
-    Enables typo-tolerant fallback matching for searches unless overridden by command options.
+  * `set -U Z_FUZZY true`:
+    Enables fuzzy fallback matching for searches unless overridden by command options.
+
+
 
 The data file stores an escaped path field so special characters remain
 lossless. Existing records remain readable and migrate during updates or

@@ -28,9 +28,11 @@ end
 function __z_encode_path
     set -l value "$argv[1]"
     set value (string replace --all -- '%' '%25' "$value")
-    set value (string replace --all -- '\\' '%5C' "$value")
+    set -l slash (printf '\\')
+    set value (string replace --all -- "$slash" '%5C' "$value")
     set value (string replace --all -- '|' '%7C' "$value")
-    set value (string replace --all -- (printf '\n') '%0A' "$value")
+    set -l newline (printf '\n' | string collect --no-trim)
+    set value (string replace --all -- "$newline" '%0A' "$value")
     printf 'v1:%s\n' "$value"
 end
 
@@ -41,15 +43,23 @@ function __z_decode_path
         return
     end
     set value (string sub -s 4 -- "$value")
-    set value (string replace --all -- '%0A' (printf '\n') "$value" | string collect --no-trim)
-    set value (string replace --all -- '%7C' '|' "$value" | string collect --no-trim)
-    set value (string replace --all -- '%5C' '\\' "$value" | string collect --no-trim)
-    string replace --all -- %25 % "$value" | string collect --no-trim
+    if not string match -q '*%*' -- "$value"
+        printf '%s\n' "$value"
+        return
+    end
+    set -l newline (printf '\n' | string collect --no-trim)
+    set -l slash (printf '\\')
+    set value (string replace --all -- '%0A' "$newline" "$value" | string collect)
+    set value (string replace --all -- '%7C' '|' "$value" | string collect)
+    set value (string replace --all -- '%5C' "$slash" "$value" | string collect)
+    string replace --all -- %25 % "$value" | string collect
 end
 
 if test -z "$Z_CMD"
     set -U Z_CMD z
 end
+
+set -g Z_VERSION 3.0.0
 
 set -U ZO_CMD "$Z_CMD"o
 

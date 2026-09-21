@@ -37,14 +37,15 @@ z project       # jump to the best match
 z -l project   # list matching directories
 z -e project   # print the best match without changing directory
 z -d project   # open the best match with the file manager
-z --typo projcet # opt in to typo-tolerant matching
+z --fuzzy projcet # opt in to fuzzy matching
+z --version     # print the installed z version
 z -p           # purge all stored entries
 z -x           # delete the current directory from the data file
 ```
 
 See [man/man1/z.md](man/man1/z.md) for all options and configuration details.
 
-Set `Z_TYPO=true` to enable typo-tolerant fallback matching by default. Exact and case-insensitive matches always take priority.
+Set `Z_FUZZY=true` to enable fuzzy fallback matching by default. Exact and case-insensitive matches always take priority.
 
 ## License
 
