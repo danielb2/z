@@ -38,6 +38,7 @@ __z_add
 @test ".z is created" -f $Z_DATA
 @test "Z_CMD is set" ! -z $Z_CMD
 @test "has foo" 0 -eq (grep -q foo $Z_DATA; echo $status)
+@test "help includes typo option" 0 -eq (z -h | grep -q -- "--typo"; echo $status)
 @test "has bar" 0 -eq (grep -q bar $Z_DATA; echo $status)
 @test "has special" 0 -eq (grep -qF $special $Z_DATA; echo $status)
 @test "encoded pipe path" 0 -eq (grep -q '%7C' $Z_DATA; echo $status)
@@ -75,6 +76,11 @@ __z --clean >/dev/null
 @test "invalid option fails" 2 -eq (z --not-an-option >/dev/null 2>/dev/null; echo $status)
 @test "multi-term query has no test error" 0 -eq (z -e f oo 2>/dev/null | string match -q "$pth/foo"; echo $status)
 @test "z foo" $pth/foo = (z foo; and echo $PWD)
+@test "typo matching is disabled by default" 1 -eq (z -e fooo >/dev/null; echo $status)
+@test "typo switch finds one-edit match" $pth/foo = (z --typo -e fooo)
+set -gx Z_TYPO true
+@test "Z_TYPO enables typo matching" $pth/foo = (z -e fooo)
+set -e Z_TYPO
 @test "z bar" $pth/bar = (z bar; and echo $PWD)
 @test "rank mode" $pth/foo = (z --rank -e foo)
 @test "recent mode" $pth/foo = (z --recent -e foo)

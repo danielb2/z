@@ -6,8 +6,8 @@ z - jump around: port of rupa's z
 
 ## SYNOPSIS
 
-`z [-cdehlprtx] string1 string2...` <br>
-`zo [-cdehlprtx] string1 string2...`
+`z [-cdehlprtyx] string1 string2...` <br>
+`zo [-cdehlprtyx] string1 string2...`
 
 ## DESCRIPTION
 
@@ -46,6 +46,9 @@ For more details about frecency, see https://github.com/rupa/z.
 
   * `-t`, `--recent`:
     Match by recent only.
+
+  * `-y`, `--typo`:
+    Enables typo-tolerant fallback matching for this search. Exact and case-insensitive matches take priority.
 
   * `-x`, `--delete`:
     Removes the current directory from `$Z_DATA`.
@@ -86,6 +89,9 @@ For more details about frecency, see https://github.com/rupa/z.
     For example `set -p Z_EXCLUDE "^/mnt/workVPN"` will block all paths starting
     with `/mnt/workVPN`. `set -P Z_EXCLUDE "^/mnt/workVPN\$"` would exclude
     exactly that directory, but not any of `/mnt/workVPN`'s subdirectories.
+
+  * `set -U Z_TYPO true`:
+    Enables typo-tolerant fallback matching for searches unless overridden by command options.
 
 The data file stores an escaped path field so special characters remain
 lossless. Existing records remain readable and migrate during updates or

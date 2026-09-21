@@ -10,10 +10,10 @@
 z \- jump around: port of rupa\'s z
 .
 .SH "SYNOPSIS"
-\fBz [\-cdehlprtx] string1 string2\.\.\.\fR
+\fBz [\-cdehlprtyx] string1 string2\.\.\.\fR
 .
 .br
-\fBzo [\-cdehlprtx] string1 string2\.\.\.\fR
+\fBzo [\-cdehlprtyx] string1 string2\.\.\.\fR
 .
 .SH "DESCRIPTION"
 Port of rupa\'s z:
@@ -57,6 +57,10 @@ Match by rank only\.
 \fB\-t\fR, \fB\-\-recent\fR
 Match by recent only\.
 .TP
+\fB\-y\fR, \fB\-\-typo\fR
+Enables typo\-tolerant fallback matching for this search\. Exact and case\-insensitive matches take priority\.
+.
+.TP
 \fB\-p\fR, \fB\-\-purge\fR
 Deletes all entries from \fB$Z_DATA\fR\.
 .
@@ -92,6 +96,10 @@ Change commands to \fBj\fR and \fBjo\fR
 .TP
 \fBset \-U Z_DATA "$HOME/\.foo"\fR
 Set data file to \fB$HOME/\.foo\fR
+.
+.TP
+\fBset \-U Z_TYPO true\fR
+Enables typo\-tolerant fallback matching for searches\.
 .
 .TP
 \fBset \-U ZO_METHOD "opencmd"\fR

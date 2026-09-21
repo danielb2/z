@@ -1,6 +1,6 @@
 function __z -d "Jump to a recent directory."
     function __print_help -d "Print z help."
-        printf "Usage: $Z_CMD  [-cdehlprtx] string1 string2...\n\n"
+        printf "Usage: $Z_CMD  [-cdehlprtyx] string1 string2...\n\n"
         printf "         -c --clean    Removes directories that no longer exist from $Z_DATA\n"
         printf "         -d --dir      Opens matching directory using system file manager.\n"
         printf "         -e --echo     Prints best match, no cd\n"
@@ -8,6 +8,7 @@ function __z -d "Jump to a recent directory."
         printf "         -p --purge    Delete all entries from $Z_DATA\n"
         printf "         -r --rank     Search by rank\n"
         printf "         -t --recent   Search by recency\n"
+        printf "         -y --typo     Enable typo-tolerant fallback matching\n"
         printf "         -x --delete   Removes the current directory from $Z_DATA\n"
         printf "         -h --help     Print this help\n\n"
     end
@@ -29,7 +30,7 @@ function __z -d "Jump to a recent directory."
         set -gx __z_dirprev $cur
     end
 
-    set -l options h/help c/clean e/echo l/list p/purge r/rank t/recent d/directory x/delete
+    set -l options h/help c/clean e/echo l/list p/purge r/rank t/recent y/typo d/directory x/delete
 
     if test (count $argv) -eq 0
         __z_pushd
@@ -55,6 +56,11 @@ function __z -d "Jump to a recent directory."
     or begin
         __print_help >&2
         return 2
+    end
+
+    set -l typo_enabled 0
+    if set -q _flag_typo; or string match -q -i -- true 1 yes "$Z_TYPO"
+        set typo_enabled 1
     end
 
     if set -q _flag_help
@@ -169,6 +175,56 @@ function __z -d "Jump to a recent directory."
             return current_path == "" || path < current_path
         }
 
+        function edit_distance(a, b, i, j, la, lb, cost, value) {
+            la = length(a)
+            lb = length(b)
+            for( i in ed_previous ) delete ed_previous[i]
+            for( i in ed_current ) delete ed_current[i]
+            for( j = 0; j <= lb; j++ ) ed_previous[j] = j
+            for( i = 1; i <= la; i++ ) {
+                ed_current[0] = i
+                for( j = 1; j <= lb; j++ ) {
+                    cost = substr(a, i, 1) != substr(b, j, 1)
+                    value = ed_previous[j] + 1
+                    if( ed_current[j-1] + 1 < value ) value = ed_current[j-1] + 1
+                    if( ed_previous[j-1] + cost < value ) value = ed_previous[j-1] + cost
+                    ed_current[j] = value
+                }
+                for( j = 0; j <= lb; j++ ) {
+                    ed_previous[j] = ed_current[j]
+                    delete ed_current[j]
+                }
+            }
+            return ed_previous[lb]
+        }
+
+        function fuzzy_limit(term) {
+            if( length(term) < 3 ) return 0
+            if( length(term) <= 5 ) return 1
+            return 2
+        }
+
+        function fuzzy_score(path, query, i, j, n, m, term, limit, best, distance, total) {
+            for( i in fuzzy_terms ) delete fuzzy_terms[i]
+            for( i in fuzzy_parts ) delete fuzzy_parts[i]
+            n = split(query, fuzzy_terms, /[[:space:]]+/)
+            m = split(path, fuzzy_parts, "/")
+            total = 0
+            for( i = 1; i <= n; i++ ) {
+                term = tolower(fuzzy_terms[i])
+                if( term == "" ) continue
+                limit = fuzzy_limit(term)
+                best = 999999
+                for( j = 1; j <= m; j++ ) {
+                    distance = edit_distance(term, tolower(fuzzy_parts[j]))
+                    if( distance < best ) best = distance
+                }
+                if( best > limit ) return -1
+                total += best
+            }
+            return total
+        }
+
         function output(matches, best_match, common) {
             # list or return the desired directory
             if( list ) {
@@ -206,7 +262,7 @@ function __z -d "Jump to a recent directory."
         }
 
         BEGIN {
-            hi_rank = ihi_rank = -9999999999
+            hi_rank = ihi_rank = fuzzy_hi_rank = -9999999999
         }
         {
             if( typ == "rank" ) {
@@ -219,6 +275,17 @@ function __z -d "Jump to a recent directory."
                 if( !(path in matches) || rank > matches[path] ) matches[path] = rank
             } else if( tolower(path) ~ tolower(q) ) {
                 if( !(path in imatches) || rank > imatches[path] ) imatches[path] = rank
+            }
+            if( fuzzy_enabled ) {
+                fuzzy_distance = fuzzy_score(path, fuzzy_query)
+                if( fuzzy_distance >= 0 ) {
+                    fuzzy_rank = rank - fuzzy_distance
+                    if( !(path in fuzzy_matches) || fuzzy_rank > fuzzy_matches[path] ) fuzzy_matches[path] = fuzzy_rank
+                    if( better(fuzzy_matches[path], path, fuzzy_hi_rank, fuzzy_best_match) ) {
+                        fuzzy_best_match = path
+                        fuzzy_hi_rank = fuzzy_matches[path]
+                    }
+                }
             }
             if( path in matches && better(matches[path], path, hi_rank, best_match) ) {
                 best_match = path
@@ -235,9 +302,12 @@ function __z -d "Jump to a recent directory."
                 output(matches, best_match, common(matches))
             } else if( ibest_match ) {
                 output(imatches, ibest_match, common(imatches))
+            } else if( fuzzy_best_match ) {
+                output(fuzzy_matches, fuzzy_best_match, common(fuzzy_matches))
             }
         }
     '
+    set -l fuzzy_query (string join ' ' -- $argv)
 
     set -l qs
     for arg in $argv
@@ -256,11 +326,11 @@ function __z -d "Jump to a recent directory."
     if set -q _flag_list
         # Handle list separately as it can print common path information to stderr
         # which cannot be captured from a subcommand.
-        command awk -v t=(date +%s) -v list="list" -v typ="$typ" -v q="$q" -F "|" $z_script "$Z_DATA"
+        command awk -v t=(date +%s) -v list="list" -v typ="$typ" -v q="$q" -v fuzzy_enabled="$typo_enabled" -v fuzzy_query="$fuzzy_query" -F "|" $z_script "$Z_DATA"
         return
     end
 
-    set target (command awk -v t=(date +%s) -v typ="$typ" -v q="$q" -F "|" $z_script "$Z_DATA")
+    set target (command awk -v t=(date +%s) -v typ="$typ" -v q="$q" -v fuzzy_enabled="$typo_enabled" -v fuzzy_query="$fuzzy_query" -F "|" $z_script "$Z_DATA")
 
     if test "$status" -gt 0
         return
