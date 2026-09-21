@@ -9,6 +9,9 @@
 - Run Fish syntax checks and the Fishtape integration suite before reporting completion.
 - If a required test tool cannot run, report that clearly.
 - Run the relevant tests again before every commit.
+- Require functional 100% coverage for every change: test every new option form, default value, valid value, invalid value, error path, boundary, and public command route introduced or modified.
+- Do not treat a happy-path assertion as coverage for a feature. Add assertions for the observable result and side effects, including unchanged state where relevant.
+- Run the complete affected test suite after the final implementation and after the final test edit; never report unrun tests as passing.
 
 ## Changelog
 
