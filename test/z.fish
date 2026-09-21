@@ -91,7 +91,7 @@ set -e Z_FUZZY
 @test "fo oo" $pth/foo = (z fo oo; and echo $PWD)
 @test "z kid" 1 = (z kid >/dev/null; echo $status)
 @test "special path encoding round trips" "$pth/$special" = (__z_decode_path (__z_encode_path "$pth/$special"))
-@test "z --list foo succeeds" 0 -eq (z --list foo >/dev/null 2>/dev/null; echo $status)
+@test "z --list foo succeeds and prints a match" 0 -eq (z --list foo | string match -q -- "*$pth/foo"; echo $status)
 cd "$pth/foo"
 z -x >/dev/null
 @test "z -x removes current directory" 1 -eq (grep -qF -- "$pth/foo" "$Z_DATA"; echo $status)

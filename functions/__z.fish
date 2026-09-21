@@ -232,11 +232,18 @@ function __z -d "Jump to a recent directory."
         function output(matches, best_match, common) {
             # list or return the desired directory
             if( list ) {
-                cmd = "sort -t '\t' -k1,1nr -k2,2"
-                for( x in matches ) {
-                    if( matches[x] ) {
-                        printf "%s\t%s\n", matches[x], x | cmd
+                while( 1 ) {
+                    found = 0
+                    for( x in matches ) if( matches[x] != "" &&
+                        (!found || matches[x] > best_score ||
+                        (matches[x] == best_score && x < best_path)) ) {
+                        found = 1
+                        best_score = matches[x]
+                        best_path = x
                     }
+                    if( !found ) break
+                    printf "%s\t%s\n", best_score, best_path
+                    matches[best_path] = ""
                 }
             } else {
                 if( common ) best_match = common

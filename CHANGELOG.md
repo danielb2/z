@@ -7,6 +7,7 @@
 - [maintenance] Cleanup tests use synthetic stale records and do not delete directories.
 - [feature] Added opt-in fuzzy matching with `--fuzzy` and `Z_FUZZY=true`.
 - [feature] Added `-v/--version`, reporting the fork version `3.0.0`.
+- [fix] Made list output sorting portable on BSD and GNU systems.
 
 ## 2026-09-20
 
