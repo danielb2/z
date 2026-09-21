@@ -51,7 +51,7 @@ Print the installed version string without changing directory\.
 .
 .TP
 \fB\-l\fR, \fB\-\-list\fR
-Show a list of matches, and their scores\. No cd\.
+Show matches as \fBweight score path\fR\. The weight is the stored database value; the score is used for ranking\. No cd\.
 .
 .TP
 \fB\-r\fR, \fB\-\-rank\fR
@@ -63,6 +63,12 @@ Match by recent only\.
 .TP
 \fB\-f\fR, \fB\-\-fuzzy\fR
 Enables fuzzy fallback matching for this search\. Exact and case\-insensitive matches take priority\.
+.TP
+\fB\-\-increase [N]\fR
+Increases the current directory's weight by N (default 10) without changing directory\.
+.TP
+\fB\-\-decrease [N]\fR
+Decreases the current directory's weight by N (default 15) without changing directory\. Weights do not go below zero\.
 .
 .TP
 \fB\-p\fR, \fB\-\-purge\fR
@@ -90,6 +96,14 @@ Goes to most recent directory matching \fBfoo\fR\.
 .TP
 \fBz \-x\fR
 Removes the current directory from \fB$Z_DATA\fR\.
+.TP
+\fBz \-\-increase 20\fR
+Boosts the current directory's weight by 20\.
+.
+.TP
+\fBz \-\-decrease 10\fR
+Lowers the current directory's weight by 10\.
+.
 .
 .SH "CONFIGURATION"
 .

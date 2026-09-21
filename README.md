@@ -41,6 +41,8 @@ z --fuzzy projcet # opt in to fuzzy matching
 z --version     # print the installed z version
 z -p           # purge all stored entries
 z -x           # delete the current directory from the data file
+z --increase 20 # boost the current directory's weight
+z --decrease 10 # lower the current directory's weight
 ```
 
 See [man/man1/z.md](man/man1/z.md) for all options and configuration details.

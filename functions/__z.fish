@@ -10,6 +10,8 @@ function __z -d "Jump to a recent directory."
         printf "         -t --recent   Search by recency\n"
         printf "         -f --fuzzy    Enable fuzzy fallback matching\n"
         printf "         -x --delete   Removes the current directory from $Z_DATA\n"
+        printf "            --increase [N] Increase current directory weight (default: 10)\n"
+        printf "            --decrease [N] Decrease current directory weight (default: 15)\n"
         printf "         -h --help     Print this help\n\n"
         printf "         -v --version  Print the z version\n"
     end
@@ -31,7 +33,7 @@ function __z -d "Jump to a recent directory."
         set -gx __z_dirprev $cur
     end
 
-    set -l options h/help v/version c/clean e/echo l/list p/purge r/rank t/recent f/fuzzy d/directory x/delete
+    set -l options h/help v/version c/clean e/echo l/list p/purge r/rank t/recent f/fuzzy d/directory x/delete increase= decrease=
 
     if test (count $argv) -eq 0
         __z_pushd
@@ -53,6 +55,15 @@ function __z -d "Jump to a recent directory."
         return $status
     end
 
+    if test (count $argv) -eq 1
+        switch $argv[1]
+            case --increase
+                set argv --increase 10
+            case --decrease
+                set argv --decrease 15
+        end
+    end
+
     argparse $options -- $argv
     or begin
         __print_help >&2
@@ -70,6 +81,32 @@ function __z -d "Jump to a recent directory."
     else if set -q _flag_version
         printf "z %s\n" "$Z_VERSION"
         return 0
+    else if set -q _flag_increase; or set -q _flag_decrease
+        if set -q _flag_increase; and set -q _flag_decrease
+            printf "Choose only --increase or --decrease\n" >&2
+            return 2
+        end
+        set -l amount 10
+        set -l direction 1
+        if set -q _flag_decrease
+            set amount 15
+            set direction -1
+        end
+        set -l value
+        if set -q _flag_increase
+            set value $_flag_increase[1]
+        else
+            set value $_flag_decrease[1]
+        end
+        if test -n "$value"
+            if not string match -rq '^[0-9]+$' -- "$value"
+                printf "Weight adjustment must be a non-negative integer\n" >&2
+                return 2
+            end
+            set amount $value
+        end
+        __z_adjust (math "$direction * $amount")
+        return $status
     else if set -q _flag_clean
         __z_clean; or return $status
         printf "%s cleaned!\n" $Z_DATA
@@ -242,7 +279,7 @@ function __z -d "Jump to a recent directory."
                         best_path = x
                     }
                     if( !found ) break
-                    printf "%s\t%s\n", best_score, best_path
+                    printf "%s\t%s\t%s\n", weights[best_path], best_score, best_path
                     matches[best_path] = ""
                 }
             } else {
@@ -282,6 +319,7 @@ function __z -d "Jump to a recent directory."
                 rank = $3 - t
             } else rank = frecent($2, $3)
             path = decode($1)
+            weights[path] = $2
             if( path ~ q ) {
                 if( !(path in matches) || rank > matches[path] ) matches[path] = rank
             } else if( tolower(path) ~ tolower(q) ) {

@@ -39,7 +39,7 @@ For more details about frecency, see https://github.com/rupa/z.
     Print the installed version string without changing directory.
 
   * `-l`, `--list`:
-    Show a list of matches, and their scores. No cd.
+    Show a list of matches as `weight score path`. No cd. The weight is the stored database value; the score is used for ranking.
 
   * `-r`, `--rank`:
     Match by rank only.
@@ -52,6 +52,12 @@ For more details about frecency, see https://github.com/rupa/z.
 
   * `-f`, `--fuzzy`:
     Enables fuzzy fallback matching for this search. Exact and case-insensitive matches take priority.
+
+  * `--increase [N]`:
+    Increases the current directory's weight by N (default 10) without changing directory.
+
+  * `--decrease [N]`:
+    Decreases the current directory's weight by N (default 15) without changing directory. Weights do not go below zero.
 
   * `-x`, `--delete`:
     Removes the current directory from `$Z_DATA`.
@@ -69,6 +75,13 @@ For more details about frecency, see https://github.com/rupa/z.
 
   * `z -x`:
     Removes the current directory from `$Z_DATA`.
+
+
+  * `z --increase 20`:
+    Boosts the current directory's weight by 20.
+
+  * `z --decrease 10`:
+    Lowers the current directory's weight by 10.
 
 ## CONFIGURATION
 
