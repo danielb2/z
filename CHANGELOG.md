@@ -7,9 +7,8 @@
 - [maintenance] Cleanup tests use synthetic stale records and do not delete directories.
 - [feature] Added opt-in fuzzy matching with `--fuzzy` and `Z_FUZZY=true`.
 - [feature] Added `-v/--version`, reporting the fork version `3.0.0`.
-- [feature] Added `--increase` and `--decrease` to adjust the current directory's weight.
-- [fix] Made list output sorting portable on BSD and GNU systems.
-- [fix] List output now shows stored weight separately from frecency score.
+- [feature] Added `--increase` and `--decrease` to adjust the current directory's ranking score.
+- [fix] List output keeps its original score-and-path format while manual adjustments use exact score deltas.
 - [maintenance] Require complete functional coverage for changed behavior and final-suite verification.
 
 ## 2026-09-20

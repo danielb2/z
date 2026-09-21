@@ -29,40 +29,45 @@ function stored_rank
     awk -F '|' -v p="$path" '$1 == p {print $2; exit}' "$Z_DATA"
 end
 
-@test "increase adds an explicit ten to an isolated row" 0 -eq (
+function listed_score
+    z -l | awk -F '\t' -v p="$adjust_dir" '$2 == p {print $1; exit}'
+end
+
+@test "increase adds an explicit ten to an isolated score" 0 -eq (
     reset_adjust_store
-    set before (stored_rank)
+    set before (listed_score)
     z --increase 10
-    set after (stored_rank)
-    awk -v before="$before" -v after="$after" 'BEGIN {exit (before == 1 && after - before == 10) ? 0 : 1}'
+    set after (listed_score)
+    awk -v before="$before" -v after="$after" 'BEGIN {exit (after - before >= 9.99 && after - before <= 10.01) ? 0 : 1}'
     echo $status
 )
 
-@test "increase defaults to ten on an isolated row" 0 -eq (
+@test "increase defaults to ten on an isolated score" 0 -eq (
     reset_adjust_store
-    set before (stored_rank)
+    set before (listed_score)
     z --increase
-    set after (stored_rank)
-    awk -v before="$before" -v after="$after" 'BEGIN {exit (before == 1 && after - before == 10) ? 0 : 1}'
+    set after (listed_score)
+    awk -v before="$before" -v after="$after" 'BEGIN {exit (after - before >= 9.99 && after - before <= 10.01) ? 0 : 1}'
     echo $status
 )
 
-@test "decrease subtracts an explicit amount from an isolated row" 0 -eq (
+@test "decrease subtracts an explicit amount from an isolated score" 0 -eq (
     reset_adjust_store
     z --increase 20
-    set before (stored_rank)
+    set before (listed_score)
     z --decrease 5
-    set after (stored_rank)
-    awk -v before="$before" -v after="$after" 'BEGIN {exit (before == 21 && before - after == 5) ? 0 : 1}'
+    set after (listed_score)
+    awk -v before="$before" -v after="$after" 'BEGIN {exit (before - after >= 4.99 && before - after <= 5.01) ? 0 : 1}'
     echo $status
 )
 
-@test "decrease defaults to fifteen and removes zero weight" 0 -eq (
+@test "decrease defaults to fifteen on an isolated score" 0 -eq (
     reset_adjust_store
-    z --increase 14
+    z --increase 20
+    set before (listed_score)
     z --decrease
-    set after (stored_rank)
-    test (count $after) -eq 0
+    set after (listed_score)
+    awk -v before="$before" -v after="$after" 'BEGIN {exit (before - after >= 14.99 && before - after <= 15.01) ? 0 : 1}'
     echo $status
 )
 

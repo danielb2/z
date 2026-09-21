@@ -32,15 +32,23 @@ function __z_adjust -d "Adjust the current directory weight"
                 time[stored] = $3
             }
         }
+        function factor(timestamp, dx) {
+            dx = now - timestamp
+            if( dx < 0 ) dx = 0
+            if( dx < 3600 ) return 4 * exp(log(0.5) * dx / 3600)
+            if( dx < 86400 ) return 2 * exp(log(0.25) * (dx-3600) / (86400-3600))
+            if( dx < 604800 ) return 0.5 * exp(log(0.5) * (dx-86400) / (604800-86400))
+            return 0.25 * exp(-(dx-604800) / 604800)
+        }
         END {
             if( path in rank ) {
-                rank[path] += delta
+                rank[path] += delta / factor(time[path])
                 if( rank[path] < 0 ) rank[path] = 0
             } else if( delta > 0 ) {
-                rank[path] = delta
+                rank[path] = delta / 4
                 time[path] = now
             }
-            for( stored in rank ) if( rank[stored] >= 1 )
+            for( stored in rank ) if( rank[stored] >= 0.000001 )
                 print stored "|" rank[stored] "|" time[stored]
         }
     ' "$Z_DATA" >"$tmpfile"; or begin

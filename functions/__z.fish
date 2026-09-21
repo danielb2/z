@@ -279,7 +279,7 @@ function __z -d "Jump to a recent directory."
                         best_path = x
                     }
                     if( !found ) break
-                    printf "%s\t%s\t%s\n", weights[best_path], best_score, best_path
+                    printf "%s\t%s\n", best_score, best_path
                     matches[best_path] = ""
                 }
             } else {
@@ -319,7 +319,6 @@ function __z -d "Jump to a recent directory."
                 rank = $3 - t
             } else rank = frecent($2, $3)
             path = decode($1)
-            weights[path] = $2
             if( path ~ q ) {
                 if( !(path in matches) || rank > matches[path] ) matches[path] = rank
             } else if( tolower(path) ~ tolower(q) ) {
