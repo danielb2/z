@@ -15,6 +15,7 @@
 - Equal scores use stable path ordering.
 - Fixed storage migration failures for paths containing backslashes.
 - Fixed search parsing for multiple matching directories and paths containing backslashes.
+- Cleanup now preserves rows it cannot safely decode instead of deleting them.
 
 For maintainers:
 

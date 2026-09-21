@@ -99,21 +99,17 @@ function __z -d "Jump to a recent directory."
             canonical($1) != encoded_pwd { print }
         ' "$Z_DATA" >"$tmpfile"
         or begin
-            rm -f "$tmpfile"
             return 1
         end
         chmod 600 "$tmpfile"; or begin
-            rm -f "$tmpfile"
             return 1
         end
         if test ! -z "$Z_OWNER"
             command chown $Z_OWNER:(id -ng $Z_OWNER) "$tmpfile"; or begin
-                rm -f "$tmpfile"
                 return 1
             end
         end
-        mv -f "$tmpfile" "$Z_DATA"; or begin
-            rm -f "$tmpfile"
+        mv "$tmpfile" "$Z_DATA"; or begin
             return 1
         end
         return 0

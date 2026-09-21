@@ -1,3 +1,14 @@
+set -e Z_CMD ZO_CMD Z_DATA Z_DATA_DIR Z_EXCLUDE Z_OWNER
+set -e fish_private_mode
+set -gx Z_CMD z
+set -gx ZO_CMD zo
+set -gx Z_EXCLUDE
+set -gx Z_OWNER
+functions -e z
+function z
+    __z $argv
+end
+
 set -xg pth (mktemp -d)
 mkdir -p "$pth/data dir"
 set -xg Z_DATA "$pth/data dir/.z"
@@ -19,7 +30,7 @@ function cd_some
 end
 
 cd_some
-printf "%s|4|1501234567\n" "$percent_path" >> "$Z_DATA"
+printf "%s|4|1501234567\n" "$percent_path" >>"$Z_DATA"
 __z_add
 
 @test "legacy rows merge into one encoded row" 1 -eq (grep -c 'v1:.*literal%257Cpath|' "$Z_DATA")
@@ -43,6 +54,18 @@ __z_add
         echo $status
      )
 cd_some
+z --clean >/dev/null
+@test "clean preserves live entries" 0 -eq (grep -q 'foo' "$Z_DATA"; echo $status)
+set live_dir "$pth/cleanup-live"
+set stale_dir "$pth/cleanup-stale"
+mkdir -p "$live_dir"
+cd "$live_dir"
+__z_add
+printf "%s|1|%s\n" (__z_encode_path "$stale_dir") (date +%s) >> "$Z_DATA"
+cd "$pth"
+__z --clean >/dev/null
+@test "clean keeps a live directory" 0 -eq (grep -q 'cleanup-live' "$Z_DATA"; echo $status)
+@test "clean removes a deleted directory" 1 -eq (grep -q 'cleanup-stale' "$Z_DATA"; echo $status)
 
 @test "z -e foo" $pth/foo = (z -e foo)
 @test "! z -e kid" 1 = (z -e kid >/dev/null; echo $status)
@@ -66,5 +89,3 @@ if test $status -ne 0
     set mode (stat -f '%Lp' $Z_DATA)
 end
 @test "data file is private" 600 -eq $mode
-
-rm -rf $pth

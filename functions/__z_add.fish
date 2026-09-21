@@ -52,25 +52,21 @@ function __z_add -d "Add PATH to .z file"
     ' "$Z_DATA" 2>/dev/null >"$tmpfile"
 
         if test $status -ne 0
-            rm -f "$tmpfile"
             printf "Unable to update %s\n" "$Z_DATA" >&2
             return 1
         end
 
         chmod 600 "$tmpfile"; or begin
-            rm -f "$tmpfile"
             printf "Unable to protect %s\n" "$Z_DATA" >&2
             return 1
         end
         if test ! -z "$Z_OWNER"
             chown $Z_OWNER:(id -ng $Z_OWNER) "$tmpfile"; or begin
-                rm -f "$tmpfile"
                 printf "Unable to set owner on %s\n" "$Z_DATA" >&2
                 return 1
             end
         end
         command mv "$tmpfile" "$Z_DATA"; or begin
-            rm -f "$tmpfile"
             printf "Unable to replace %s\n" "$Z_DATA" >&2
             return 1
         end
