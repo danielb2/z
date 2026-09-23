@@ -40,6 +40,20 @@ function __z -d "Jump to a recent directory."
         return $status
     end
 
+    if test (count $argv) -eq 1; and test "$argv[1]" = .
+        if not command -q git
+            __z_pushd .
+            return $status
+        end
+        set -l git_root (command git rev-parse --show-toplevel 2>/dev/null)
+        if test -n "$git_root"
+            __z_pushd "$git_root"
+        else
+            __z_pushd .
+        end
+        return $status
+    end
+
     if test (count $argv) -eq 1; and test -d "$argv[1]"
         __z_pushd "$argv[1]"
         return $status

@@ -20,6 +20,7 @@
 - Put new changes under the actual current date.
 - Do not move old entries to a new date.
 - Confirm the date before adding a new changelog section.
+- Run `date +%F` and use that exact date for every new changelog section or entry; never infer the date from memory or commit metadata.
 
 ## Compatibility
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-23
+
+- [feature] `__z .` now jumps to the current Git repository root when available.
+- [maintenance] Changelog dates are verified with `date +%F` before new entries.
+
 ## 2026-09-21
 
 - [fix] Cleanup removes missing directories without removing live entries.
