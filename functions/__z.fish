@@ -1,6 +1,6 @@
 function __z -d "Jump to a recent directory."
     function __print_help -d "Print z help."
-        printf "Usage: $Z_CMD  [-cdefhlprtvx] string1 string2...\n\n"
+        printf "Usage: $Z_CMD  [-cdefhilprtvx] string1 string2...\n\n"
         printf "         -c --clean    Removes directories that no longer exist from $Z_DATA\n"
         printf "         -d --dir      Opens matching directory using system file manager.\n"
         printf "         -e --echo     Prints best match, no cd\n"
@@ -9,6 +9,7 @@ function __z -d "Jump to a recent directory."
         printf "         -r --rank     Search by rank\n"
         printf "         -t --recent   Search by recency\n"
         printf "         -f --fuzzy    Enable fuzzy fallback matching\n"
+        printf "         -i --interactive Select a match with fzf\n"
         printf "         -x --delete   Removes the current directory from $Z_DATA\n"
         printf "            --increase [N] Increase current directory weight (default: 10)\n"
         printf "            --decrease [N] Decrease current directory weight (default: 15)\n"
@@ -33,7 +34,7 @@ function __z -d "Jump to a recent directory."
         set -gx __z_dirprev $cur
     end
 
-    set -l options h/help v/version c/clean e/echo l/list p/purge r/rank t/recent f/fuzzy d/directory x/delete increase= decrease=
+    set -l options h/help v/version c/clean e/echo l/list p/purge r/rank t/recent f/fuzzy i/interactive d/directory x/delete increase= decrease=
 
     if test (count $argv) -eq 0
         __z_pushd
@@ -95,6 +96,35 @@ function __z -d "Jump to a recent directory."
     else if set -q _flag_version
         printf "z %s\n" "$Z_VERSION"
         return 0
+    else if set -q _flag_interactive
+        if set -q _flag_list
+            printf "Choose only --interactive or --list\n" >&2
+            return 2
+        end
+        if not command -q fzf
+            printf "z: --interactive requires fzf, but fzf was not found\n" >&2
+            return 127
+        end
+        set -l interactive_args --list
+        if set -q _flag_rank
+            set interactive_args $interactive_args --rank
+        else if set -q _flag_recent
+            set interactive_args $interactive_args --recent
+        end
+        if set -q _flag_fuzzy
+            set interactive_args $interactive_args --fuzzy
+        end
+        set -l selection (__z $interactive_args $argv | command fzf --preview='command ls -F --color=always {2..}' --preview-window=down,20% --height=45% --layout=reverse --border)
+        if test $status -ne 0; or test -z "$selection"
+            return 130
+        end
+        set -l selected (string split -m 1 \t -- "$selection")
+        if test (count $selected) -lt 2
+            printf "z: invalid fzf selection\n" >&2
+            return 1
+        end
+        __z_pushd "$selected[2]"
+        return $status
     else if set -q _flag_increase; or set -q _flag_decrease
         if set -q _flag_increase; and set -q _flag_decrease
             printf "Choose only --increase or --decrease\n" >&2

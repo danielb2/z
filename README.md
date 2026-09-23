@@ -38,6 +38,7 @@ z -l project   # list matching directories
 z -e project   # print the best match without changing directory
 z -d project   # open the best match with the file manager
 z --fuzzy projcet # opt in to fuzzy matching
+z -i project   # select a match interactively with fzf
 z --version     # print the installed z version
 z -p           # purge all stored entries
 z -x           # delete the current directory from the data file

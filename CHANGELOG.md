@@ -3,6 +3,7 @@
 ## 2026-09-23
 
 - [feature] `__z .` now jumps to the current Git repository root when available.
+- [feature] Added `-i/--interactive` selection with optional `fzf` support.
 - [maintenance] Changelog dates are verified with `date +%F` before new entries.
 
 ## 2026-09-21

@@ -53,6 +53,9 @@ For more details about frecency, see https://github.com/rupa/z.
   * `-f`, `--fuzzy`:
     Enables fuzzy fallback matching for this search. Exact and case-insensitive matches take priority.
 
+  * `-i`, `--interactive`:
+    Select a matching directory with `fzf`. The command warns and returns an error if `fzf` is not installed.
+
   * `--increase [N]`:
     Increases the current directory's ranking score by N (default 10) without changing directory.
 
