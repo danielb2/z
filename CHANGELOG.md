@@ -4,6 +4,7 @@
 
 - [feature] `__z .` now jumps to the current Git repository root when available.
 - [feature] Added `-i/--interactive` selection with optional `fzf` support.
+- [fix] Interactive previews now use a 30% pane and multi-column directory listings.
 - [maintenance] Changelog dates are verified with `date +%F` before new entries.
 
 ## 2026-09-21

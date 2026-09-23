@@ -114,7 +114,7 @@ function __z -d "Jump to a recent directory."
         if set -q _flag_fuzzy
             set interactive_args $interactive_args --fuzzy
         end
-        set -l selection (__z $interactive_args $argv | command fzf --preview='command ls -F --color=always {2..}' --preview-window=down,20% --height=45% --layout=reverse --border)
+        set -l selection (__z $interactive_args $argv | command fzf --preview='command ls -F -C --color=always {2..}' --preview-window=down,30% --height=45% --layout=reverse --border)
         if test $status -ne 0; or test -z "$selection"
             return 130
         end
