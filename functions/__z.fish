@@ -123,8 +123,8 @@ function __z -d "Jump to a recent directory."
             printf "z: invalid fzf selection\n" >&2
             return 1
         end
-        __z_pushd "$selected[2]"
-        return $status
+        printf "%s\n" "$selected[2]"
+        return 0
     else if set -q _flag_increase; or set -q _flag_decrease
         if set -q _flag_increase; and set -q _flag_decrease
             printf "Choose only --increase or --decrease\n" >&2
