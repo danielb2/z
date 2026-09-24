@@ -28,6 +28,11 @@ Or install with [Fisher](https://github.com/jorgebucaran/fisher):
 fisher install danielb2/z
 ```
 
+## Requirements
+
+- Fish 4.0 or newer.
+- [fzf](https://github.com/junegunn/fzf) is required only for `z --interactive`.
+
 ## Usage
 
 Common commands include:

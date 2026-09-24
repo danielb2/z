@@ -10,15 +10,16 @@ jobs:
       - uses: actions/checkout@v5
       - name: Install Fish
         run: |
-          sudo apt-add-repository -yn ppa:fish-shell/release-3
+          sudo apt-add-repository -yn ppa:fish-shell/release-4
           sudo apt-get update
           sudo apt-get install -y fish
+          fish -c 'string match -rq "^fish, version 4\\." (fish --version)'
 
       - name: Install Reef and run tests
         run: |
           cd "$GITHUB_WORKSPACE"
           curl -sL https://tinyurl.com/fish-reef | source
           reef init
-          reef add jorgebucaran/fishtape (pwd)
+          reef add jorgebucaran/fishtape
           fishtape test/*.fish
         shell: fish {0}

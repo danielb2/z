@@ -22,6 +22,10 @@ in order.
 
 For more details about frecency, see https://github.com/rupa/z.
 
+## REQUIREMENTS
+
+Fish 4.0 or newer is required. `fzf` is required only for `z --interactive`.
+
 ## OPTIONS
   * `-c`, `--clean`:
     Removes directories that no longer exist from `$Z_DATA`.
