@@ -27,46 +27,39 @@ function __z -d "Jump to a recent directory."
         end
     end
 
-    function __z_pushd
-        set -l cur (pwd)
-        builtin cd $argv[1]; or return
-        set -a dirstack (pwd)
-        set -gx __z_dirprev $cur
-    end
-
     set -l options h/help v/version c/clean e/echo l/list p/purge r/rank t/recent f/fuzzy i/interactive d/directory x/delete increase= decrease=
 
     if test (count $argv) -eq 0
-        __z_pushd
+        __z_cd
         return $status
     end
 
     if test (count $argv) -eq 1; and test "$argv[1]" = .
         if not command -q git
-            __z_pushd .
+            __z_cd .
             return $status
         end
         set -l git_root (command git rev-parse --show-toplevel 2>/dev/null)
         if test -n "$git_root"
-            __z_pushd "$git_root"
+            __z_cd "$git_root"
         else
-            __z_pushd .
+            __z_cd .
         end
         return $status
     end
 
     if test (count $argv) -eq 1; and test -d "$argv[1]"
-        __z_pushd "$argv[1]"
+        __z_cd "$argv[1]"
         return $status
     end
 
     if test (count $argv) -eq 1; and test "$argv[1]" = -
-        __z_pushd $__z_dirprev
+        __z_cd $__z_dirprev
         return $status
     end
 
     if test (count $argv) -eq 1; and test "$argv[1]" = ".."
-        __z_pushd ..
+        __z_cd ..
         return $status
     end
 
@@ -157,7 +150,7 @@ function __z -d "Jump to a recent directory."
         return 0
     else if set -q _flag_purge
         command chmod 600 "$Z_DATA"; or return 1
-        printf '' > "$Z_DATA"; or begin
+        printf '' >"$Z_DATA"; or begin
             printf "Unable to purge %s\n" "$Z_DATA" >&2
             return 1
         end
@@ -452,6 +445,6 @@ function __z -d "Jump to a recent directory."
             echo "Not sure how to open file manager"; and return 1
         end
     else
-        __z_pushd "$target"
+        __z_cd "$target"
     end
 end
