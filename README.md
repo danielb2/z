@@ -40,15 +40,18 @@ z -d project   # open the best match with the file manager
 z --fuzzy projcet # opt in to fuzzy matching
 z -i project   # select a match interactively with fzf
 z --version     # print the installed z version
+z .             # jump to the current Git repository root
+cd -             # return to the previous z directory
 z -p           # purge all stored entries
 z -x           # delete the current directory from the data file
-z --increase 20 # boost the current directory's weight
-z --decrease 10 # lower the current directory's weight
+z --increase 20 # increase the current ranking score by 20
+z --decrease 10 # decrease the current ranking score by 10
 ```
 
 See [man/man1/z.md](man/man1/z.md) for all options and configuration details.
 
 Set `Z_FUZZY=true` to enable fuzzy fallback matching by default. Exact and case-insensitive matches always take priority.
+Interactive mode prints the selected path and does not change directory. It requires [fzf](https://github.com/junegunn/fzf).
 
 ## License
 

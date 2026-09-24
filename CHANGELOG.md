@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-24
+
+- [fix] Renamed the directory-change helper to `__z_cd`; it now tracks only z's previous directory.
+- [maintenance] Updated the README with Git-root, previous-directory, score-adjustment, and interactive-mode behavior.
+- [maintenance] CI now uses Reef for plugin and Fishtape installation and checkout v5.
+
 ## 2026-09-23
 
 - [feature] `__z .` now jumps to the current Git repository root when available.
