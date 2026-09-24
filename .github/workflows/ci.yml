@@ -20,6 +20,6 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           curl -sL https://tinyurl.com/fish-reef | source
           reef init
-          reef add jorgebucaran/fishtape
+          reef add jorgebucaran/fishtape (pwd)
           fishtape test/*.fish
         shell: fish {0}

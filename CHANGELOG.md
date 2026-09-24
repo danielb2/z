@@ -5,6 +5,8 @@
 - [fix] Renamed the directory-change helper to `__z_cd`; it now tracks only z's previous directory.
 - [maintenance] Updated the README with Git-root, previous-directory, score-adjustment, and interactive-mode behavior.
 - [maintenance] CI now uses Reef for plugin and Fishtape installation and checkout v5.
+- [maintenance] CI now targets Fish 4.x and verifies the installed Fish version.
+- [maintenance] Documented Fish 4.0 as the minimum supported version.
 
 ## 2026-09-23
 
