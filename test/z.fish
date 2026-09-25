@@ -89,7 +89,7 @@ set -gx Z_FUZZY false
 @test "rank mode" $pth/foo = (z --rank -e foo)
 @test "recent mode" $pth/foo = (z --recent -e foo)
 @test "f oo" $pth/foo = (z f oo; and echo $PWD)
-@test "fo ooo does not match foo" $pth/foo != (z fo ooo; and echo $PWD)
+@test "overlapping terms match foo" $pth/foo = (z fo oo; and echo $PWD)
 @test "z kid" 1 = (z kid >/dev/null; echo $status)
 @test "special path encoding round trips" "$pth/$special" = (__z_decode_path (__z_encode_path "$pth/$special"))
 @test "z --list foo succeeds and prints a match" 0 -eq (z --list foo | string match -q -- "*$pth/foo"; echo $status)

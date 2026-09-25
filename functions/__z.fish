@@ -253,6 +253,16 @@ function __z -d "Jump to a recent directory."
             return current_path == "" || path < current_path
         }
 
+        function contains_all(value, insensitive, i, count, term) {
+            count = split(query_terms, requested, sprintf("%c", 28))
+            for( i = 1; i <= count; i++ ) {
+                term = decode(requested[i])
+                if( insensitive ) term = tolower(term)
+                if( index(value, term) == 0 ) return 0
+            }
+            return 1
+        }
+
         function edit_distance(a, b, i, j, la, lb, cost, value) {
             la = length(a)
             lb = length(b)
@@ -278,7 +288,6 @@ function __z -d "Jump to a recent directory."
 
         function fuzzy_limit(term) {
             if( length(term) < 3 ) return 0
-            if( length(term) <= 5 ) return 1
             return 2
         }
 
@@ -356,9 +365,9 @@ function __z -d "Jump to a recent directory."
                 rank = $3 - t
             } else rank = frecent($2, $3)
             path = decode($1)
-            if( path ~ q ) {
+            if( contains_all(path, 0) ) {
                 if( !(path in matches) || rank > matches[path] ) matches[path] = rank
-            } else if( tolower(path) ~ tolower(q) ) {
+            } else if( contains_all(tolower(path), 1) ) {
                 if( !(path in imatches) || rank > imatches[path] ) imatches[path] = rank
             }
             if( fuzzy_enabled ) {
@@ -393,6 +402,11 @@ function __z -d "Jump to a recent directory."
         }
     '
     set -l fuzzy_query (string join ' ' -- $argv)
+    set -l encoded_query_terms
+    for arg in $argv
+        set -a encoded_query_terms (__z_encode_path "$arg")
+    end
+    set -l query_terms (string join (printf '\034') -- $encoded_query_terms | string collect)
 
     set -l qs
     for arg in $argv
@@ -411,11 +425,11 @@ function __z -d "Jump to a recent directory."
     if set -q _flag_list
         # Handle list separately as it can print common path information to stderr
         # which cannot be captured from a subcommand.
-        command awk -v t=(date +%s) -v list="list" -v typ="$typ" -v q="$q" -v fuzzy_enabled="$fuzzy_enabled" -v fuzzy_query="$fuzzy_query" -F "|" $z_script "$Z_DATA"
+        command awk -v t=(date +%s) -v list="list" -v typ="$typ" -v q="$q" -v query_terms="$query_terms" -v fuzzy_enabled="$fuzzy_enabled" -v fuzzy_query="$fuzzy_query" -F "|" $z_script "$Z_DATA"
         return
     end
 
-    set target (command awk -v t=(date +%s) -v typ="$typ" -v q="$q" -v fuzzy_enabled="$fuzzy_enabled" -v fuzzy_query="$fuzzy_query" -F "|" $z_script "$Z_DATA")
+    set target (command awk -v t=(date +%s) -v typ="$typ" -v q="$q" -v query_terms="$query_terms" -v fuzzy_enabled="$fuzzy_enabled" -v fuzzy_query="$fuzzy_query" -F "|" $z_script "$Z_DATA")
 
     if test "$status" -gt 0
         return

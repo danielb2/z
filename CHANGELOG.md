@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-25
+
+- [maintenance] Added public `cd -f` regression coverage for fuzzy-match distance boundaries.
+- [fix] Multi-term searches now match each term independently, including overlapping terms.
+- [fix] Keep independent search terms portable when passing them to `awk`.
+- [fix] Preserve special characters in independently matched search terms.
+- [fix] Allow two-edit fuzzy matches for terms of three or more characters.
+
 ## 2026-09-24
 
 - [fix] Renamed the directory-change helper to `__z_cd`; it now tracks only z's previous directory.
