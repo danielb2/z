@@ -122,8 +122,8 @@ Change commands to \fBj\fR and \fBjo\fR
 Set data file to \fB$HOME/\.foo\fR
 .
 .TP
-\fBset \-U Z_FUZZY true\fR
-Enables fuzzy fallback matching for searches\.
+\fBset \-U Z_OPTS \-\-fuzzy\fR
+Adds persistent command-line options to every search\. Options are passed as a Fish list; for example, this enables fuzzy matching without repeating \fB\-\-fuzzy\fR\.
 .TP
 \fBset \-U ZO_METHOD "opencmd"\fR
 Runs \fBopencmd dir\fR on \fBzo dir\fR (defaults to \fBopen\fR or \fBxdg\-open\fR)
@@ -134,4 +134,3 @@ Ensure data file is owned by \fBusername\fR\. This prevents usage of \fBz\fR wit
 .P
 The data file stores an escaped path field so special characters remain lossless\. Existing records remain readable and migrate during updates or cleanup\. The file uses private permissions, and rewrites preserve the configured owner\.
 .
-

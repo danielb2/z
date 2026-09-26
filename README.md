@@ -55,7 +55,7 @@ z --decrease 10 # decrease the current ranking score by 10
 
 See [man/man1/z.md](man/man1/z.md) for all options and configuration details.
 
-Set `Z_FUZZY=true` to enable fuzzy fallback matching by default. Exact and case-insensitive matches always take priority.
+Set `Z_OPTS` to persistent command-line options, for example `set -U Z_OPTS --fuzzy`, to enable fuzzy matching without repeating `--fuzzy`. Exact and case-insensitive matches always take priority.
 Interactive mode prints the selected path and does not change directory. It requires [fzf](https://github.com/junegunn/fzf).
 
 ## License

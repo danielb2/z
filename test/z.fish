@@ -1,4 +1,4 @@
-set -e Z_CMD ZO_CMD Z_DATA Z_DATA_DIR Z_EXCLUDE Z_OWNER Z_FUZZY
+set -e Z_CMD ZO_CMD Z_DATA Z_DATA_DIR Z_EXCLUDE Z_OPTS Z_OWNER
 set -e fish_private_mode
 set -gx Z_CMD z
 set -gx ZO_CMD zo
@@ -81,10 +81,11 @@ __z --clean >/dev/null
 @test "z foo" $pth/foo = (z foo; and echo $PWD)
 @test "fuzzy matching is disabled by default" 1 -eq (z -e fooo >/dev/null; echo $status)
 @test "fuzzy switch finds one-edit match" $pth/foo = (z --fuzzy -e fooo)
-set -gx Z_FUZZY true
-@test "Z_FUZZY enables fuzzy matching" $pth/foo = (z -e fooo)
-set -e Z_FUZZY
-set -gx Z_FUZZY false
+set -gx Z_OPTS --fuzzy
+@test "Z_OPTS enables fuzzy matching" $pth/foo = (z -e fooo)
+set -gx Z_OPTS --not-an-option
+@test "invalid Z_OPTS fails" 2 -eq (z foo >/dev/null 2>/dev/null; echo $status)
+set -e Z_OPTS
 @test "z bar" $pth/bar = (z bar; and echo $PWD)
 @test "rank mode" $pth/foo = (z --rank -e foo)
 @test "recent mode" $pth/foo = (z --recent -e foo)

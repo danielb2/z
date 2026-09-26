@@ -1,4 +1,4 @@
-set -e Z_CMD ZO_CMD Z_DATA Z_DATA_DIR Z_EXCLUDE Z_OWNER Z_FUZZY
+set -e Z_CMD ZO_CMD Z_DATA Z_DATA_DIR Z_EXCLUDE Z_OPTS Z_OWNER
 set -gx Z_CMD cd
 set -gx Z_DATA (mktemp)
 source (path dirname (status filename))/../conf.d/z.fish

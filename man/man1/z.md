@@ -113,8 +113,8 @@ Fish 4.0 or newer is required. `fzf` is required only for `z --interactive`.
     with `/mnt/workVPN`. `set -P Z_EXCLUDE "^/mnt/workVPN\$"` would exclude
     exactly that directory, but not any of `/mnt/workVPN`'s subdirectories.
 
-  * `set -U Z_FUZZY true`:
-    Enables fuzzy fallback matching for searches unless overridden by command options.
+  * `set -U Z_OPTS --fuzzy`:
+    Adds persistent command-line options to every search. Options are passed as a Fish list; for example, this enables fuzzy matching without repeating `--fuzzy`.
 
 
 

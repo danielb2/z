@@ -72,14 +72,14 @@ function __z -d "Jump to a recent directory."
         end
     end
 
-    argparse $options -- $argv
+    argparse $options -- $Z_OPTS $argv
     or begin
         __print_help >&2
         return 2
     end
 
     set -l fuzzy_enabled 0
-    if set -q _flag_fuzzy; or string match -q -i -- true 1 yes "$Z_FUZZY"
+    if set -q _flag_fuzzy
         set fuzzy_enabled 1
     end
 

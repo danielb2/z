@@ -2,6 +2,8 @@
 
 ## 2026-09-25
 
+- [feature] Added `Z_OPTS` for persistent command-line options such as `--fuzzy`.
+- [maintenance] Removed the redundant `Z_FUZZY` configuration in favor of `Z_OPTS`.
 - [maintenance] Added public `cd -f` regression coverage for fuzzy-match distance boundaries.
 - [fix] Multi-term searches now match each term independently, including overlapping terms.
 - [fix] Keep independent search terms portable when passing them to `awk`.
