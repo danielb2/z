@@ -7,19 +7,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - name: Install Fish
         run: |
-          sudo apt-add-repository -yn ppa:fish-shell/release-3
+          sudo apt-add-repository -yn ppa:fish-shell/release-4
           sudo apt-get update
           sudo apt-get install -y fish
+          fish -c 'string match -rq "^fish, version 4\\." (fish --version)'
 
-      - name: Install Fisher & Fishtape
-        run: curl -sL git.io/fisher | source && fisher install jorgebucaran/{fisher,fishtape}
-        shell: fish {0}
-
-      - name: Run Tests
+      - name: Install Reef and run tests
         run: |
-          $GITHUB_WORKSPACE/ && fisher install .
+          cd "$GITHUB_WORKSPACE"
+          curl -sL https://tinyurl.com/fish-reef | source
+          reef init
+          reef add jorgebucaran/fishtape (pwd)
           fishtape test/*.fish
         shell: fish {0}
