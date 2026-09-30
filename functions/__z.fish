@@ -1,6 +1,6 @@
 function __z -d "Jump to a recent directory."
     function __print_help -d "Print z help."
-        printf "Usage: $Z_CMD  [-celrth] string1 string2...\n\n"
+        printf "Usage: $Z_CMD  [-cdefhilprtvx] string1 string2...\n\n"
         printf "         -c --clean    Removes directories that no longer exist from $Z_DATA\n"
         printf "         -d --dir      Opens matching directory using system file manager.\n"
         printf "         -e --echo     Prints best match, no cd\n"
@@ -8,8 +8,13 @@ function __z -d "Jump to a recent directory."
         printf "         -p --purge    Delete all entries from $Z_DATA\n"
         printf "         -r --rank     Search by rank\n"
         printf "         -t --recent   Search by recency\n"
+        printf "         -f --fuzzy    Enable fuzzy fallback matching\n"
+        printf "         -i --interactive Select a match with fzf\n"
         printf "         -x --delete   Removes the current directory from $Z_DATA\n"
+        printf "            --increase [N] Increase current directory weight (default: 10)\n"
+        printf "            --decrease [N] Decrease current directory weight (default: 15)\n"
         printf "         -h --help     Print this help\n\n"
+        printf "         -v --version  Print the z version\n"
     end
     function __z_legacy_escape_regex
         # taken from escape_string_pcre2 in fish
@@ -22,50 +27,175 @@ function __z -d "Jump to a recent directory."
         end
     end
 
-    function __z_pushd
-        set -l cur (pwd)
-        builtin cd $argv[1]; or return
-        set -a dirstack (pwd)
-        set -gx __z_dirprev $cur
-    end
+    set -l options h/help v/version c/clean e/echo l/list p/purge r/rank t/recent f/fuzzy i/interactive d/directory x/delete increase= decrease=
 
-    set -l options h/help c/clean e/echo l/list p/purge r/rank t/recent d/directory x/delete
-
-    if test -z "$argv"
-        __z_pushd $argv
+    if test (count $argv) -eq 0
+        __z_cd
         return $status
     end
 
-    if test -d "$argv"
-        __z_pushd $argv
+    if test (count $argv) -eq 1; and test "$argv[1]" = .
+        if not command -q git
+            __z_cd .
+            return $status
+        end
+        set -l git_root (command git rev-parse --show-toplevel 2>/dev/null)
+        if test -n "$git_root"
+            __z_cd "$git_root"
+        else
+            __z_cd .
+        end
         return $status
     end
 
-    if test "$argv" = -
-        __z_pushd $__z_dirprev
+    if test (count $argv) -eq 1; and test -d "$argv[1]"
+        __z_cd "$argv[1]"
         return $status
     end
 
-    if test "$argv" = ".."
-        __z_pushd ..
+    if test (count $argv) -eq 1; and test "$argv[1]" = -
+        __z_cd $__z_dirprev
         return $status
     end
 
-    argparse $options -- $argv
+    if test (count $argv) -eq 1; and test "$argv[1]" = ".."
+        __z_cd ..
+        return $status
+    end
+
+    if test (count $argv) -eq 1
+        switch $argv[1]
+            case --increase
+                set argv --increase 10
+            case --decrease
+                set argv --decrease 15
+        end
+    end
+
+    argparse $options -- $Z_OPTS $argv
+    or begin
+        __print_help >&2
+        return 2
+    end
+
+    set -l fuzzy_enabled 0
+    if set -q _flag_fuzzy
+        set fuzzy_enabled 1
+    end
 
     if set -q _flag_help
         __print_help
         return 0
+    else if set -q _flag_version
+        printf "z %s\n" "$Z_VERSION"
+        return 0
+    else if set -q _flag_interactive
+        if set -q _flag_list
+            printf "Choose only --interactive or --list\n" >&2
+            return 2
+        end
+        if not command -q fzf
+            printf "z: --interactive requires fzf, but fzf was not found\n" >&2
+            return 127
+        end
+        set -l interactive_args --list
+        if set -q _flag_rank
+            set interactive_args $interactive_args --rank
+        else if set -q _flag_recent
+            set interactive_args $interactive_args --recent
+        end
+        if set -q _flag_fuzzy
+            set interactive_args $interactive_args --fuzzy
+        end
+        set -l selection (__z $interactive_args $argv | command fzf --preview='command ls -F -C --color=always {2..}' --preview-window=down,30% --height=45% --layout=reverse --border --info=inline)
+        if test $status -ne 0; or test -z "$selection"
+            return 130
+        end
+        set -l selected (string split -m 1 \t -- "$selection")
+        if test (count $selected) -lt 2
+            printf "z: invalid fzf selection\n" >&2
+            return 1
+        end
+        printf "%s\n" "$selected[2]"
+        return 0
+    else if set -q _flag_increase; or set -q _flag_decrease
+        if set -q _flag_increase; and set -q _flag_decrease
+            printf "Choose only --increase or --decrease\n" >&2
+            return 2
+        end
+        set -l amount 10
+        set -l direction 1
+        if set -q _flag_decrease
+            set amount 15
+            set direction -1
+        end
+        set -l value
+        if set -q _flag_increase
+            set value $_flag_increase[1]
+        else
+            set value $_flag_decrease[1]
+        end
+        if test -n "$value"
+            if not string match -rq '^[0-9]+$' -- "$value"
+                printf "Weight adjustment must be a non-negative integer\n" >&2
+                return 2
+            end
+            set amount $value
+        end
+        __z_adjust (math "$direction * $amount")
+        return $status
     else if set -q _flag_clean
-        __z_clean
+        __z_clean; or return $status
         printf "%s cleaned!\n" $Z_DATA
         return 0
     else if set -q _flag_purge
-        echo >$Z_DATA
+        command chmod 600 "$Z_DATA"; or return 1
+        printf '' >"$Z_DATA"; or begin
+            printf "Unable to purge %s\n" "$Z_DATA" >&2
+            return 1
+        end
+        if test ! -z "$Z_OWNER"
+            command chown $Z_OWNER:(id -ng $Z_OWNER) "$Z_DATA"; or return 1
+        end
         printf "%s purged!\n" $Z_DATA
         return 0
     else if set -q _flag_delete
-        sed -i -e "\:^$PWD|.*:d" $Z_DATA
+        set -l tmpfile (mktemp "$Z_DATA.XXXXXX"); or return 1
+        set -l encoded_pwd (__z_encode_path "$PWD")
+        awk -F "|" -v encoded_pwd="$encoded_pwd" '
+            function encode(value, out, i, c, slash) {
+                out = ""
+                slash = sprintf("%c", 92)
+                for( i = 1; i <= length(value); i++ ) {
+                    c = substr(value, i, 1)
+                    if( c == "%" ) out = out "%25"
+                    else if( c == slash ) out = out "%5C"
+                    else if( c == "|" ) out = out "%7C"
+                    else if( c == "\n" ) out = out "%0A"
+                    else out = out c
+                }
+                return "v1:" out
+            }
+            function canonical(value) {
+                if( substr(value, 1, 3) == "v1:" ) return value
+                return encode(value)
+            }
+            canonical($1) != encoded_pwd { print }
+        ' "$Z_DATA" >"$tmpfile"
+        or begin
+            return 1
+        end
+        chmod 600 "$tmpfile"; or begin
+            return 1
+        end
+        if test ! -z "$Z_OWNER"
+            command chown $Z_OWNER:(id -ng $Z_OWNER) "$tmpfile"; or begin
+                return 1
+            end
+        end
+        mv "$tmpfile" "$Z_DATA"; or begin
+            return 1
+        end
         return 0
     end
 
@@ -80,20 +210,123 @@ function __z -d "Jump to a recent directory."
     set -l z_script '
         function frecent(rank, time) {
             dx = t-time
-            if( dx < 3600 ) return rank*4
-            if( dx < 86400 ) return rank*2
-            if( dx < 604800 ) return rank/2
-            return rank/4
+            if( dx < 0 ) dx = 0
+            # Preserve the original time-band weights while interpolating.
+            if( dx < 3600 ) return rank * 4 * exp(log(0.5) * dx / 3600)
+            if( dx < 86400 ) return rank * 2 * exp(log(0.25) * (dx-3600) / (86400-3600))
+            if( dx < 604800 ) return rank * 0.5 * exp(log(0.5) * (dx-86400) / (604800-86400))
+            return rank * 0.25 * exp(-(dx-604800) / 604800)
+        }
+
+        function encode(path, out, i, c, slash) {
+            out = ""
+            slash = sprintf("%c", 92)
+            for( i = 1; i <= length(path); i++ ) {
+                c = substr(path, i, 1)
+                if( c == "%" ) out = out "%25"
+                else if( c == slash ) out = out "%5C"
+                else if( c == "|" ) out = out "%7C"
+                else if( c == "\n" ) out = out "%0A"
+                else out = out c
+            }
+            return "v1:" out
+        }
+
+        function canonical(path) {
+            if( substr(path, 1, 3) == "v1:" ) return path
+            return encode(path)
+        }
+
+        function decode(path) {
+            if( substr(path, 1, 3) != "v1:" ) return path
+            path = substr(path, 4)
+            gsub("%0A", "\n", path)
+            gsub("%7C", "|", path)
+            gsub("%5C", sprintf("%c", 92), path)
+            gsub("%25", "%", path)
+            return path
+        }
+
+        function better(score, path, current_score, current_path) {
+            if( score > current_score ) return 1
+            if( score < current_score ) return 0
+            return current_path == "" || path < current_path
+        }
+
+        function contains_all(value, insensitive, i, count, term) {
+            count = split(query_terms, requested, sprintf("%c", 28))
+            for( i = 1; i <= count; i++ ) {
+                term = decode(requested[i])
+                if( insensitive ) term = tolower(term)
+                if( index(value, term) == 0 ) return 0
+            }
+            return 1
+        }
+
+        function edit_distance(a, b, i, j, la, lb, cost, value) {
+            la = length(a)
+            lb = length(b)
+            for( i in ed_previous ) delete ed_previous[i]
+            for( i in ed_current ) delete ed_current[i]
+            for( j = 0; j <= lb; j++ ) ed_previous[j] = j
+            for( i = 1; i <= la; i++ ) {
+                ed_current[0] = i
+                for( j = 1; j <= lb; j++ ) {
+                    cost = substr(a, i, 1) != substr(b, j, 1)
+                    value = ed_previous[j] + 1
+                    if( ed_current[j-1] + 1 < value ) value = ed_current[j-1] + 1
+                    if( ed_previous[j-1] + cost < value ) value = ed_previous[j-1] + cost
+                    ed_current[j] = value
+                }
+                for( j = 0; j <= lb; j++ ) {
+                    ed_previous[j] = ed_current[j]
+                    delete ed_current[j]
+                }
+            }
+            return ed_previous[lb]
+        }
+
+        function fuzzy_limit(term) {
+            if( length(term) < 3 ) return 0
+            return 2
+        }
+
+        function fuzzy_score(path, query, i, j, n, m, term, limit, best, distance, total) {
+            for( i in fuzzy_terms ) delete fuzzy_terms[i]
+            for( i in fuzzy_parts ) delete fuzzy_parts[i]
+            n = split(query, fuzzy_terms, /[[:space:]]+/)
+            m = split(path, fuzzy_parts, "/")
+            total = 0
+            for( i = 1; i <= n; i++ ) {
+                term = tolower(fuzzy_terms[i])
+                if( term == "" ) continue
+                limit = fuzzy_limit(term)
+                best = 999999
+                for( j = 1; j <= m; j++ ) {
+                    distance = edit_distance(term, tolower(fuzzy_parts[j]))
+                    if( distance < best ) best = distance
+                }
+                if( best > limit ) return -1
+                total += best
+            }
+            return total
         }
 
         function output(matches, best_match, common) {
             # list or return the desired directory
             if( list ) {
-                cmd = "sort -nr"
-                for( x in matches ) {
-                    if( matches[x] ) {
-                        printf "%-10s %s\n", matches[x], x | cmd
+                while( 1 ) {
+                    found = 0
+                    for( x in matches ) if( matches[x] != "" &&
+                        (!found || matches[x] > best_score ||
+                        (matches[x] == best_score && x < best_path)) ) {
+                        found = 1
+                        best_score = matches[x]
+                        best_path = x
                     }
+                    if( !found ) break
+                    printf "%s\t%s\n", best_score, best_path
+                    matches[best_path] = ""
                 }
             } else {
                 if( common ) best_match = common
@@ -101,8 +334,10 @@ function __z -d "Jump to a recent directory."
             }
         }
 
-        function common(matches) {
+        function common(matches, short, x, slash) {
             # find the common root of a list of matches, if it exists
+            short = ""
+            slash = sprintf("%c", 92)
             for( x in matches ) {
                 if( matches[x] && (!short || length(x) < length(short)) ) {
                     short = x
@@ -112,11 +347,16 @@ function __z -d "Jump to a recent directory."
             for( x in matches ) if( matches[x] && index(x, short) != 1 ) {
                     return
                 }
+            for( x in matches ) if( matches[x] && x != short &&
+                    substr(x, length(short) + 1, 1) != "/" &&
+                    substr(x, length(short) + 1, 1) != slash ) {
+                    return
+                }
             return short
         }
 
         BEGIN {
-            hi_rank = ihi_rank = -9999999999
+            hi_rank = ihi_rank = fuzzy_hi_rank = -9999999999
         }
         {
             if( typ == "rank" ) {
@@ -124,15 +364,29 @@ function __z -d "Jump to a recent directory."
             } else if( typ == "recent" ) {
                 rank = $3 - t
             } else rank = frecent($2, $3)
-            if( $1 ~ q ) {
-                matches[$1] = rank
-            } else if( tolower($1) ~ tolower(q) ) imatches[$1] = rank
-            if( matches[$1] && matches[$1] > hi_rank ) {
-                best_match = $1
-                hi_rank = matches[$1]
-            } else if( imatches[$1] && imatches[$1] > ihi_rank ) {
-                ibest_match = $1
-                ihi_rank = imatches[$1]
+            path = decode($1)
+            if( contains_all(path, 0) ) {
+                if( !(path in matches) || rank > matches[path] ) matches[path] = rank
+            } else if( contains_all(tolower(path), 1) ) {
+                if( !(path in imatches) || rank > imatches[path] ) imatches[path] = rank
+            }
+            if( fuzzy_enabled ) {
+                fuzzy_distance = fuzzy_score(path, fuzzy_query)
+                if( fuzzy_distance >= 0 ) {
+                    fuzzy_rank = rank - fuzzy_distance
+                    if( !(path in fuzzy_matches) || fuzzy_rank > fuzzy_matches[path] ) fuzzy_matches[path] = fuzzy_rank
+                    if( better(fuzzy_matches[path], path, fuzzy_hi_rank, fuzzy_best_match) ) {
+                        fuzzy_best_match = path
+                        fuzzy_hi_rank = fuzzy_matches[path]
+                    }
+                }
+            }
+            if( path in matches && better(matches[path], path, hi_rank, best_match) ) {
+                best_match = path
+                hi_rank = matches[path]
+            } else if( path in imatches && better(imatches[path], path, ihi_rank, ibest_match) ) {
+                ibest_match = path
+                ihi_rank = imatches[path]
             }
         }
 
@@ -142,9 +396,17 @@ function __z -d "Jump to a recent directory."
                 output(matches, best_match, common(matches))
             } else if( ibest_match ) {
                 output(imatches, ibest_match, common(imatches))
+            } else if( fuzzy_best_match ) {
+                output(fuzzy_matches, fuzzy_best_match, common(fuzzy_matches))
             }
         }
     '
+    set -l fuzzy_query (string join ' ' -- $argv)
+    set -l encoded_query_terms
+    for arg in $argv
+        set -a encoded_query_terms (__z_encode_path "$arg")
+    end
+    set -l query_terms (string join (printf '\034') -- $encoded_query_terms | string collect)
 
     set -l qs
     for arg in $argv
@@ -163,11 +425,11 @@ function __z -d "Jump to a recent directory."
     if set -q _flag_list
         # Handle list separately as it can print common path information to stderr
         # which cannot be captured from a subcommand.
-        command awk -v t=(date +%s) -v list="list" -v typ="$typ" -v q="$q" -F "|" $z_script "$Z_DATA"
+        command awk -v t=(date +%s) -v list="list" -v typ="$typ" -v q="$q" -v query_terms="$query_terms" -v fuzzy_enabled="$fuzzy_enabled" -v fuzzy_query="$fuzzy_query" -F "|" $z_script "$Z_DATA"
         return
     end
 
-    set target (command awk -v t=(date +%s) -v typ="$typ" -v q="$q" -F "|" $z_script "$Z_DATA")
+    set target (command awk -v t=(date +%s) -v typ="$typ" -v q="$q" -v query_terms="$query_terms" -v fuzzy_enabled="$fuzzy_enabled" -v fuzzy_query="$fuzzy_query" -F "|" $z_script "$Z_DATA")
 
     if test "$status" -gt 0
         return
@@ -185,9 +447,10 @@ function __z -d "Jump to a recent directory."
             type -q "$ZO_METHOD"; and "$ZO_METHOD" "$target"; and return $status
             echo "Cannot open with ZO_METHOD set to $ZO_METHOD"; and return 1
         else if test "$OS" = Windows_NT
-            # Be careful, in msys2, explorer always return 1
-            type -q explorer; and explorer "$target"
-            return 0
+            if type -q explorer
+                explorer "$target"
+                return $status
+            end
             echo "Cannot open file explorer"
             return 1
         else
@@ -196,6 +459,6 @@ function __z -d "Jump to a recent directory."
             echo "Not sure how to open file manager"; and return 1
         end
     else
-        __z_pushd "$target"
+        __z_cd "$target"
     end
 end
