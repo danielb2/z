@@ -6,8 +6,8 @@ z - jump around: port of rupa's z
 
 ## SYNOPSIS
 
-`z [-cehlprt] string1 string2...` <br>
-`zo [-cehlprt] string1 string2...`
+`z [-cdehlprtyx] string1 string2...` <br>
+`zo [-cdehlprtyx] string1 string2...`
 
 ## DESCRIPTION
 
@@ -22,6 +22,10 @@ in order.
 
 For more details about frecency, see https://github.com/rupa/z.
 
+## REQUIREMENTS
+
+Fish 4.0 or newer is required. `fzf` is required only for `z --interactive`.
+
 ## OPTIONS
   * `-c`, `--clean`:
     Removes directories that no longer exist from `$Z_DATA`.
@@ -29,17 +33,38 @@ For more details about frecency, see https://github.com/rupa/z.
   * `-e`, `--echo`:
     Prints the best match. No cd.
 
+  * `-d`, `--directory`:
+    Opens the best match with the configured file manager. No cd.
+
   * `-h`, `--help`:
     Show a brief help message.
 
+  * `-v`, `--version`:
+    Print the installed version string without changing directory.
+
   * `-l`, `--list`:
-    Show a list of matches, and their scores. No cd.
+    Show a list of matches and their scores. No cd.
 
   * `-r`, `--rank`:
     Match by rank only.
 
+  * `-p`, `--purge`:
+    Deletes all entries from `$Z_DATA`.
+
   * `-t`, `--recent`:
     Match by recent only.
+
+  * `-f`, `--fuzzy`:
+    Enables fuzzy fallback matching for this search. Exact and case-insensitive matches take priority.
+
+  * `-i`, `--interactive`:
+    Print a selected matching directory with `fzf` without changing directory. The command warns and returns an error if `fzf` is not installed.
+
+  * `--increase [N]`:
+    Increases the current directory's ranking score by N (default 10) without changing directory.
+
+  * `--decrease [N]`:
+    Decreases the current directory's ranking score by N (default 15) without changing directory.
 
   * `-x`, `--delete`:
     Removes the current directory from `$Z_DATA`.
@@ -57,6 +82,13 @@ For more details about frecency, see https://github.com/rupa/z.
 
   * `z -x`:
     Removes the current directory from `$Z_DATA`.
+
+
+  * `z --increase 20`:
+    Boosts the current directory's weight by 20.
+
+  * `z --decrease 10`:
+    Lowers the current directory's weight by 10.
 
 ## CONFIGURATION
 
@@ -80,3 +112,13 @@ For more details about frecency, see https://github.com/rupa/z.
     For example `set -p Z_EXCLUDE "^/mnt/workVPN"` will block all paths starting
     with `/mnt/workVPN`. `set -P Z_EXCLUDE "^/mnt/workVPN\$"` would exclude
     exactly that directory, but not any of `/mnt/workVPN`'s subdirectories.
+
+  * `set -U Z_OPTS --fuzzy`:
+    Adds persistent command-line options to every search. Options are passed as a Fish list; for example, this enables fuzzy matching without repeating `--fuzzy`.
+
+
+
+The data file stores an escaped path field so special characters remain
+lossless. Existing records remain readable and migrate during updates or
+cleanup. The file uses private permissions, and rewrites preserve the
+configured owner.

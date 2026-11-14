@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "Z" "1" "August 2019" "" ""
+.TH "Z" "1" "September 2026" "" ""
 .
 .SH "NAME"
 \fBz\fR \- jump around
@@ -10,10 +10,10 @@
 z \- jump around: port of rupa\'s z
 .
 .SH "SYNOPSIS"
-\fBz [\-cehlprt] string1 string2\.\.\.\fR
+\fBz [\-cdehlprtyx] string1 string2\.\.\.\fR
 .
 .br
-\fBzo [\-cehlprt] string1 string2\.\.\.\fR
+\fBzo [\-cdehlprtyx] string1 string2\.\.\.\fR
 .
 .SH "DESCRIPTION"
 Port of rupa\'s z:
@@ -27,6 +27,9 @@ After a short learning phase, z will take you to the most \'frecent\' directory 
 .P
 For more details about frecency, see https://github\.com/rupa/z\.
 .
+.SH "REQUIREMENTS"
+Fish 4.0 or newer is required\. \fBfzf\fR is required only for \fBz \-\-interactive\fR\.
+.
 .SH "OPTIONS"
 .
 .TP
@@ -36,14 +39,22 @@ Removes directories that no longer exist from \fB$Z_DATA\fR\.
 .TP
 \fB\-e\fR, \fB\-\-echo\fR
 Prints the best match\. No cd\.
+.TP
+\fB\-d\fR, \fB\-\-directory\fR
+Opens the best match with the configured file manager\. No cd\.
+.
 .
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Show a brief help message\.
 .
 .TP
+\fB\-v\fR, \fB\-\-version\fR
+Print the installed version string without changing directory\.
+.
+.TP
 \fB\-l\fR, \fB\-\-list\fR
-Show a list of matches, and their scores\. No cd\.
+Show a list of matches and their scores\. No cd\.
 .
 .TP
 \fB\-r\fR, \fB\-\-rank\fR
@@ -52,6 +63,23 @@ Match by rank only\.
 .TP
 \fB\-t\fR, \fB\-\-recent\fR
 Match by recent only\.
+.TP
+\fB\-f\fR, \fB\-\-fuzzy\fR
+Enables fuzzy fallback matching for this search\. Exact and case\-insensitive matches take priority\.
+.TP
+\fB\-i\fR, \fB\-\-interactive\fR
+Print a selected matching directory with \fBfzf\fR without changing directory\. The command warns and returns an error if \fBfzf\fR is not installed\.
+.TP
+\fB\-\-increase [N]\fR
+Increases the current directory's ranking score by N (default 10) without changing directory\.
+.TP
+\fB\-\-decrease [N]\fR
+Decreases the current directory's ranking score by N (default 15) without changing directory\.
+.
+.TP
+\fB\-p\fR, \fB\-\-purge\fR
+Deletes all entries from \fB$Z_DATA\fR\.
+.
 .
 .TP
 \fB\-x\fR, \fB\-\-delete\fR
@@ -74,6 +102,14 @@ Goes to most recent directory matching \fBfoo\fR\.
 .TP
 \fBz \-x\fR
 Removes the current directory from \fB$Z_DATA\fR\.
+.TP
+\fBz \-\-increase 20\fR
+Boosts the current directory's ranking score by 20\.
+.
+.TP
+\fBz \-\-decrease 10\fR
+Lowers the current directory's ranking score by 10\.
+.
 .
 .SH "CONFIGURATION"
 .
@@ -86,10 +122,15 @@ Change commands to \fBj\fR and \fBjo\fR
 Set data file to \fB$HOME/\.foo\fR
 .
 .TP
+\fBset \-U Z_OPTS \-\-fuzzy\fR
+Adds persistent command-line options to every search\. Options are passed as a Fish list; for example, this enables fuzzy matching without repeating \fB\-\-fuzzy\fR\.
+.TP
 \fBset \-U ZO_METHOD "opencmd"\fR
 Runs \fBopencmd dir\fR on \fBzo dir\fR (defaults to \fBopen\fR or \fBxdg\-open\fR)
 .
 .TP
 \fBset \-U Z_OWNER "username"\fR
 Ensure data file is owned by \fBusername\fR\. This prevents usage of \fBz\fR with \fBsudo\fR to cause file to be inaccessible in non\-sudo sessions\.
-
+.P
+The data file stores an escaped path field so special characters remain lossless\. Existing records remain readable and migrate during updates or cleanup\. The file uses private permissions, and rewrites preserve the configured owner\.
+.

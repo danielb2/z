@@ -8,27 +8,60 @@ A _pure-fish_ port means **z** is _fast_ and _fish-friendly_, with tab-completio
 
 Originally written by [@jethrokuan](https://github.com/jethrokuan/), co-maintained with [@krobelus](https://github.com/krobelus).
 
-## Notes
+## Features
 
-The project by [@jethrokuan](https://github.com/jethrokuan/) appears dead, so I'm not even bothering doing a PR
+- Tracks directories using frequency and recency.
+- Supports search, list, echo, purge, delete, cleanup, and directory-opening modes.
+- Provides Fish completions and configurable data storage.
 
 ## Installation
 
-Install with [reef](https://github.com/danielb2/reef): or [Fisher](https://github.com/jorgebucaran/fisher):
+Install with [Reef](https://github.com/danielb2/reef):
 
 ```console
 reef install danielb2/z
 ```
 
+Or install with [Fisher](https://github.com/jorgebucaran/fisher):
+
+```console
+fisher install danielb2/z
+```
+
+## Requirements
+
+- Fish 4.0 or newer.
+- [fzf](https://github.com/junegunn/fzf) is required only for `z --interactive`.
+
 ## Usage
 
-See [man/man1/z.md](https://github.com/danielb2/z/blob/master/man/man1/z.md) for details.
+Common commands include:
+
+```console
+z project       # jump to the best match
+z -l project   # list matching directories
+z -e project   # print the best match without changing directory
+z -d project   # open the best match with the file manager
+z --fuzzy projcet # opt in to fuzzy matching
+z -i project   # select a match interactively with fzf
+z --version     # print the installed z version
+z .             # jump to the current Git repository root
+cd -             # return to the previous z directory
+z -p           # purge all stored entries
+z -x           # delete the current directory from the data file
+z --increase 20 # increase the current ranking score by 20
+z --decrease 10 # decrease the current ranking score by 10
+```
+
+See [man/man1/z.md](man/man1/z.md) for all options and configuration details.
+
+Set `Z_OPTS` to persistent command-line options, for example `set -U Z_OPTS --fuzzy`, to enable fuzzy matching without repeating `--fuzzy`. Exact and case-insensitive matches always take priority.
+Interactive mode prints the selected path and does not change directory. It requires [fzf](https://github.com/junegunn/fzf).
 
 ## License
 
 Z is MIT licensed. See the [LICENSE](LICENSE) for details.
 
-## ChangeLog
-- 2025.12.17: implementation now allows $Z_CMD to be set to `cd`
-- 2025.12.16: implement `..`, `-` and empty command symantics to mimick those of `cd`
-- 2025.12.16: cd into local dir if it exists as opposed to jumping
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the complete project history.
