@@ -59,7 +59,7 @@ if test -z "$Z_CMD"
     set -U Z_CMD z
 end
 
-set -g Z_VERSION 3.0.0
+set -g Z_VERSION 3.1.0
 
 set -U ZO_CMD "$Z_CMD"o
 
@@ -68,7 +68,6 @@ if test ! -z $Z_CMD
         __z $argv
     end
 end
-
 
 if test ! -z $ZO_CMD
     function $ZO_CMD -d "open target dir"
@@ -82,7 +81,6 @@ else if contains $HOME $Z_EXCLUDE
     # Workaround: migrate old default values to a regex (see #90).
     set Z_EXCLUDE (string replace -r -- "^$HOME\$" '^'$HOME'$$' $Z_EXCLUDE)
 end
-
 
 function __z_on_variable_pwd --on-variable PWD
     __z_add
