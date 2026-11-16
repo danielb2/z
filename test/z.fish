@@ -40,7 +40,7 @@ __z_add
 @test "Z_CMD is set" ! -z $Z_CMD
 @test "has foo" 0 -eq (grep -q foo $Z_DATA; echo $status)
 @test "help includes fuzzy option" 0 -eq (z -h | grep -q -- "--fuzzy"; echo $status)
-@test "version prints a semver version" 0 -eq (z --version | grep -q '^z [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$'; echo $status)
+@test "version prints a semver version" 0 -eq (z --version | grep -Eq '^z [0-9]+\.[0-9]+\.[0-9]+$'; echo $status)
 @test "version does not change directory" "$PWD" = (z --version >/dev/null; echo $PWD)
 @test "has bar" 0 -eq (grep -q bar $Z_DATA; echo $status)
 @test "has special" "$pth/$special" = (z -e "$special")
