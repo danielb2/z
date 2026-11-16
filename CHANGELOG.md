@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-16
+
+- [maintenance] Version tests verify semantic version formatting without pinning release numbers.
+
 ## 2026-09-25
 
 - [feature] Added `Z_OPTS` for persistent command-line options such as `--fuzzy`.
